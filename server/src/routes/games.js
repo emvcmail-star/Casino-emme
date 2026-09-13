@@ -100,6 +100,21 @@ router.get('/', requireAuth, async (_req, res) => {
   res.json({ games: rows });
 });
 
+router.get('/leaderboard', requireAuth, async (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 20, 100);
+  const rows = await db
+    .prepare(
+      `SELECT gh.id, gh.game_key, gh.bet_amount, gh.payout, gh.multiplier, gh.created_at,
+              u.username, u.avatar
+       FROM game_history gh JOIN users u ON u.id = gh.user_id
+       WHERE gh.outcome = 'win' AND gh.multiplier > 1
+       ORDER BY gh.multiplier DESC, gh.created_at DESC
+       LIMIT ?`
+    )
+    .all(limit);
+  res.json({ leaderboard: rows });
+});
+
 router.get('/:key/config', requireAuth, async (req, res) => {
   const config = await getConfig(req.params.key);
   if (!config) return res.status(404).json({ error: 'Juego no encontrado' });

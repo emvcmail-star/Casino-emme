@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, Gamepad2, Gift, Ticket, History, LogOut, ShieldCheck,
-  Users, Coins, Settings2, ClipboardList, ReceiptText, SlidersHorizontal, X, Spade,
+  Users, Coins, Settings2, ClipboardList, ReceiptText, SlidersHorizontal, X, Spade, Trophy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import UserAvatar from './UserAvatar.jsx';
@@ -14,6 +14,7 @@ const USER_LINKS = [
   { to: '/bonuses', label: 'Bonuses', icon: Gift },
   { to: '/promo-codes', label: 'Promo Codes', icon: Ticket },
   { to: '/history', label: 'History', icon: History },
+  { to: '/leaderboard', label: 'Leaderboard', icon: Trophy },
 ];
 
 const ADMIN_LINKS = [

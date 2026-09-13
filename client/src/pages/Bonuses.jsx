@@ -35,6 +35,7 @@ export default function Bonuses() {
       title: 'Grandes premios',
       desc: 'Los multiplicadores más altos aparecen en Slots, Crash y Plinko en modo riesgo alto.',
       status: 'Solo entretenimiento',
+      cta: { to: '/leaderboard', label: 'Ver tabla' },
       color: 'text-emerald-300',
     },
   ];
