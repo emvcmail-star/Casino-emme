@@ -1,18 +1,54 @@
-import Database from 'better-sqlite3';
-import path from 'node:path';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import 'dotenv/config';
+import { createClient } from '@libsql/client/web';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dataDir = path.join(__dirname, '..', '..', 'data');
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-const dbPath = path.join(dataDir, 'casino.db');
-export const db = new Database(dbPath);
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+function rowsToObjects(result) {
+  const { columns, rows } = result;
+  return rows.map((row) => {
+    const obj = {};
+    columns.forEach((col, i) => {
+      obj[col] = row[i];
+    });
+    return obj;
+  });
+}
 
-db.exec(`
+export const db = {
+  prepare(sql) {
+    return {
+      async get(...args) {
+        const result = await client.execute({ sql, args });
+        return rowsToObjects(result)[0];
+      },
+      async all(...args) {
+        const result = await client.execute({ sql, args });
+        return rowsToObjects(result);
+      },
+      async run(...args) {
+        const result = await client.execute({ sql, args });
+        return {
+          lastInsertRowid: result.lastInsertRowid !== undefined ? Number(result.lastInsertRowid) : undefined,
+          changes: result.rowsAffected,
+        };
+      },
+    };
+  },
+  async exec(sql) {
+    const statements = sql
+      .split(';')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    for (const statement of statements) {
+      await client.execute(statement);
+    }
+  },
+};
+
+await db.exec(`
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
@@ -28,7 +64,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS transactions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL, -- bet, win, promo, admin_credit, admin_debit, signup_bonus, reset
+  type TEXT NOT NULL,
   amount REAL NOT NULL,
   balance_after REAL NOT NULL,
   description TEXT,
@@ -42,8 +78,8 @@ CREATE TABLE IF NOT EXISTS game_history (
   bet_amount REAL NOT NULL,
   payout REAL NOT NULL,
   multiplier REAL NOT NULL,
-  outcome TEXT NOT NULL, -- win, loss, push
-  details TEXT, -- JSON blob
+  outcome TEXT NOT NULL,
+  details TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -53,7 +89,7 @@ CREATE TABLE IF NOT EXISTS game_configs (
   rtp REAL NOT NULL DEFAULT 96,
   min_bet REAL NOT NULL DEFAULT 1,
   max_bet REAL NOT NULL DEFAULT 1000,
-  params TEXT NOT NULL DEFAULT '{}', -- JSON blob, game-specific tunables
+  params TEXT NOT NULL DEFAULT '{}',
   enabled INTEGER NOT NULL DEFAULT 1,
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -93,26 +129,32 @@ CREATE TABLE IF NOT EXISTS app_settings (
 );
 `);
 
-export function logAdminActivity(adminId, adminUsername, action, target, details) {
-  db.prepare(
-    `INSERT INTO admin_activity_log (admin_id, admin_username, action, target, details) VALUES (?, ?, ?, ?, ?)`
-  ).run(adminId ?? null, adminUsername ?? 'system', action, target ?? null, details ? JSON.stringify(details) : null);
+export async function logAdminActivity(adminId, adminUsername, action, target, details) {
+  await db
+    .prepare(
+      `INSERT INTO admin_activity_log (admin_id, admin_username, action, target, details) VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(adminId ?? null, adminUsername ?? 'system', action, target ?? null, details ? JSON.stringify(details) : null);
 }
 
-export function recordTransaction(userId, type, amount, balanceAfter, description) {
-  db.prepare(
-    `INSERT INTO transactions (user_id, type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?)`
-  ).run(userId, type, amount, balanceAfter, description ?? null);
+export async function recordTransaction(userId, type, amount, balanceAfter, description) {
+  await db
+    .prepare(
+      `INSERT INTO transactions (user_id, type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?)`
+    )
+    .run(userId, type, amount, balanceAfter, description ?? null);
 }
 
-export function getSetting(key, fallback) {
-  const row = db.prepare(`SELECT value FROM app_settings WHERE key = ?`).get(key);
+export async function getSetting(key, fallback) {
+  const row = await db.prepare(`SELECT value FROM app_settings WHERE key = ?`).get(key);
   return row ? row.value : fallback;
 }
 
-export function setSetting(key, value) {
-  db.prepare(
-    `INSERT INTO app_settings (key, value) VALUES (?, ?)
-     ON CONFLICT(key) DO UPDATE SET value = excluded.value`
-  ).run(key, String(value));
+export async function setSetting(key, value) {
+  await db
+    .prepare(
+      `INSERT INTO app_settings (key, value) VALUES (?, ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`
+    )
+    .run(key, String(value));
 }

@@ -32,14 +32,14 @@ import {
 
 const router = Router();
 
-function getConfig(gameKey) {
-  const row = db.prepare('SELECT * FROM game_configs WHERE game_key = ?').get(gameKey);
+async function getConfig(gameKey) {
+  const row = await db.prepare('SELECT * FROM game_configs WHERE game_key = ?').get(gameKey);
   if (!row) return null;
   return { ...row, params: JSON.parse(row.params) };
 }
 
-function requireEnabledConfig(gameKey, res) {
-  const config = getConfig(gameKey);
+async function requireEnabledConfig(gameKey, res) {
+  const config = await getConfig(gameKey);
   if (!config) {
     res.status(404).json({ error: 'Juego no encontrado' });
     return null;
@@ -64,41 +64,43 @@ function validateBet(config, bet, res) {
   return amount;
 }
 
-function currentCredits(userId) {
-  return db.prepare('SELECT credits FROM users WHERE id = ?').get(userId).credits;
+async function currentCredits(userId) {
+  return (await db.prepare('SELECT credits FROM users WHERE id = ?').get(userId)).credits;
 }
 
-function debit(userId, amount, gameKey) {
-  const credits = currentCredits(userId);
+async function debit(userId, amount, gameKey) {
+  const credits = await currentCredits(userId);
   if (credits < amount) throw { status: 400, message: 'Créditos virtuales insuficientes' };
   const newBalance = Math.round((credits - amount) * 100) / 100;
-  db.prepare('UPDATE users SET credits = ? WHERE id = ?').run(newBalance, userId);
-  recordTransaction(userId, 'bet', -amount, newBalance, `Apuesta en ${gameKey}`);
+  await db.prepare('UPDATE users SET credits = ? WHERE id = ?').run(newBalance, userId);
+  await recordTransaction(userId, 'bet', -amount, newBalance, `Apuesta en ${gameKey}`);
   return newBalance;
 }
 
-function settle(userId, gameKey, betAmount, multiplier, outcome, details) {
+async function settle(userId, gameKey, betAmount, multiplier, outcome, details) {
   const payout = Math.round(betAmount * multiplier * 100) / 100;
-  let newBalance = currentCredits(userId);
+  let newBalance = await currentCredits(userId);
   if (payout > 0) {
     newBalance = Math.round((newBalance + payout) * 100) / 100;
-    db.prepare('UPDATE users SET credits = ? WHERE id = ?').run(newBalance, userId);
-    recordTransaction(userId, 'win', payout, newBalance, `Pago de ${gameKey}`);
+    await db.prepare('UPDATE users SET credits = ? WHERE id = ?').run(newBalance, userId);
+    await recordTransaction(userId, 'win', payout, newBalance, `Pago de ${gameKey}`);
   }
-  db.prepare(
-    `INSERT INTO game_history (user_id, game_key, bet_amount, payout, multiplier, outcome, details)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).run(userId, gameKey, betAmount, payout, multiplier, outcome, JSON.stringify(details || {}));
+  await db
+    .prepare(
+      `INSERT INTO game_history (user_id, game_key, bet_amount, payout, multiplier, outcome, details)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(userId, gameKey, betAmount, payout, multiplier, outcome, JSON.stringify(details || {}));
   return { payout, newBalance };
 }
 
-router.get('/', requireAuth, (_req, res) => {
-  const rows = db.prepare('SELECT game_key, name, rtp, min_bet, max_bet, enabled FROM game_configs').all();
+router.get('/', requireAuth, async (_req, res) => {
+  const rows = await db.prepare('SELECT game_key, name, rtp, min_bet, max_bet, enabled FROM game_configs').all();
   res.json({ games: rows });
 });
 
-router.get('/:key/config', requireAuth, (req, res) => {
-  const config = getConfig(req.params.key);
+router.get('/:key/config', requireAuth, async (req, res) => {
+  const config = await getConfig(req.params.key);
   if (!config) return res.status(404).json({ error: 'Juego no encontrado' });
   const { params, ...rest } = config;
   res.json({ ...rest, params });
@@ -117,20 +119,20 @@ const ONE_SHOT_HANDLERS = {
   baccarat: playBaccarat,
 };
 
-router.post('/:key/play', requireAuth, (req, res) => {
+router.post('/:key/play', requireAuth, async (req, res) => {
   const gameKey = req.params.key;
   const handler = ONE_SHOT_HANDLERS[gameKey];
   if (!handler) return res.status(400).json({ error: 'Este juego usa un flujo distinto (sesión por pasos)' });
 
-  const config = requireEnabledConfig(gameKey, res);
+  const config = await requireEnabledConfig(gameKey, res);
   if (!config) return;
   const bet = validateBet(config, req.body?.bet, res);
   if (bet === null) return;
 
   try {
-    debit(req.user.id, bet, gameKey);
+    await debit(req.user.id, bet, gameKey);
     const result = handler(config.params, bet, req.body || {});
-    const { payout, newBalance } = settle(req.user.id, gameKey, bet, result.multiplier, result.outcome, result.details);
+    const { payout, newBalance } = await settle(req.user.id, gameKey, bet, result.multiplier, result.outcome, result.details);
     res.json({
       outcome: result.outcome,
       multiplier: result.multiplier,
@@ -146,19 +148,19 @@ router.post('/:key/play', requireAuth, (req, res) => {
 });
 
 // ============== BLACKJACK ==============
-router.post('/blackjack/deal', requireAuth, (req, res) => {
-  const config = requireEnabledConfig('blackjack', res);
+router.post('/blackjack/deal', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('blackjack', res);
   if (!config) return;
   const bet = validateBet(config, req.body?.bet, res);
   if (bet === null) return;
   try {
-    const newBalance = debit(req.user.id, bet, 'blackjack');
+    const newBalance = await debit(req.user.id, bet, 'blackjack');
     const { state, naturalBlackjack } = blackjackDeal(config.params);
     const sessionId = createSession(req.user.id, 'blackjack', { ...state, bet });
 
     if (naturalBlackjack) {
       const resolved = blackjackResolve(state, config.params);
-      const { payout, newBalance: finalBalance } = settle(req.user.id, 'blackjack', bet, resolved.multiplier, resolved.outcome, {
+      const { payout, newBalance: finalBalance } = await settle(req.user.id, 'blackjack', bet, resolved.multiplier, resolved.outcome, {
         player: state.player,
         dealer: state.dealer,
       });
@@ -187,9 +189,10 @@ router.post('/blackjack/deal', requireAuth, (req, res) => {
   }
 });
 
-function bjRespondFinal(req, res, session) {
-  const resolved = blackjackResolve(session.state, getConfig('blackjack').params);
-  const { payout, newBalance } = settle(
+async function bjRespondFinal(req, res, session) {
+  const config = await getConfig('blackjack');
+  const resolved = blackjackResolve(session.state, config.params);
+  const { payout, newBalance } = await settle(
     req.user.id,
     'blackjack',
     session.state.bet,
@@ -209,7 +212,7 @@ function bjRespondFinal(req, res, session) {
   });
 }
 
-router.post('/blackjack/hit', requireAuth, (req, res) => {
+router.post('/blackjack/hit', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'blackjack');
   if (!session) return res.status(404).json({ error: 'Sesión de blackjack no encontrada o expirada' });
   blackjackHit(session.state);
@@ -237,18 +240,18 @@ router.post('/blackjack/hit', requireAuth, (req, res) => {
   res.json({ finished: false, player: session.state.player, dealer: [session.state.dealer[0], { hidden: true }] });
 });
 
-router.post('/blackjack/stand', requireAuth, (req, res) => {
+router.post('/blackjack/stand', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'blackjack');
   if (!session) return res.status(404).json({ error: 'Sesión de blackjack no encontrada o expirada' });
   bjRespondFinal(req, res, session);
 });
 
-router.post('/blackjack/double', requireAuth, (req, res) => {
+router.post('/blackjack/double', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'blackjack');
   if (!session) return res.status(404).json({ error: 'Sesión de blackjack no encontrada o expirada' });
   if (session.state.player.length !== 2) return res.status(400).json({ error: 'Solo puedes doblar en tu primera decisión' });
   try {
-    debit(req.user.id, session.state.bet, 'blackjack (doble)');
+    await debit(req.user.id, session.state.bet, 'blackjack (doble)');
     session.state.bet = session.state.bet * 2;
     blackjackHit(session.state);
     updateSession(session.id, session.state);
@@ -259,14 +262,14 @@ router.post('/blackjack/double', requireAuth, (req, res) => {
 });
 
 // ============== MINES ==============
-router.post('/mines/start', requireAuth, (req, res) => {
-  const config = requireEnabledConfig('mines', res);
+router.post('/mines/start', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('mines', res);
   if (!config) return;
   const bet = validateBet(config, req.body?.bet, res);
   if (bet === null) return;
   const minesCount = Math.min(Math.max(Number(req.body?.minesCount) || 3, 1), 24);
   try {
-    const newBalance = debit(req.user.id, bet, 'mines');
+    const newBalance = await debit(req.user.id, bet, 'mines');
     const mines = minesCreateGrid(config.params.gridSize, minesCount);
     const sessionId = createSession(req.user.id, 'mines', {
       bet,
@@ -283,7 +286,7 @@ router.post('/mines/start', requireAuth, (req, res) => {
   }
 });
 
-router.post('/mines/reveal', requireAuth, (req, res) => {
+router.post('/mines/reveal', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'mines');
   if (!session) return res.status(404).json({ error: 'Sesión de mines no encontrada o expirada' });
   const cellIndex = Number(req.body?.cellIndex);
@@ -295,7 +298,7 @@ router.post('/mines/reveal', requireAuth, (req, res) => {
   if (isMine) {
     state.finished = true;
     updateSession(session.id, state);
-    const { payout, newBalance } = settle(req.user.id, 'mines', state.bet, 0, 'loss', {
+    const { payout, newBalance } = await settle(req.user.id, 'mines', state.bet, 0, 'loss', {
       mines: state.mines,
       revealed: state.revealed,
       hitMine: cellIndex,
@@ -312,7 +315,7 @@ router.post('/mines/reveal', requireAuth, (req, res) => {
 
   if (allCleared) {
     state.finished = true;
-    const { payout, newBalance } = settle(req.user.id, 'mines', state.bet, multiplier, 'win', {
+    const { payout, newBalance } = await settle(req.user.id, 'mines', state.bet, multiplier, 'win', {
       mines: state.mines,
       revealed: state.revealed,
     });
@@ -323,7 +326,7 @@ router.post('/mines/reveal', requireAuth, (req, res) => {
   res.json({ finished: false, revealed: state.revealed, multiplier });
 });
 
-router.post('/mines/cashout', requireAuth, (req, res) => {
+router.post('/mines/cashout', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'mines');
   if (!session) return res.status(404).json({ error: 'Sesión de mines no encontrada o expirada' });
   const state = session.state;
@@ -331,7 +334,7 @@ router.post('/mines/cashout', requireAuth, (req, res) => {
   const multiplier = state.revealed.length
     ? minesFairMultiplier(state.gridSize, state.minesCount, state.revealed.length, state.houseEdge ?? 0.04)
     : 1;
-  const { payout, newBalance } = settle(req.user.id, 'mines', state.bet, multiplier, 'win', {
+  const { payout, newBalance } = await settle(req.user.id, 'mines', state.bet, multiplier, 'win', {
     mines: state.mines,
     revealed: state.revealed,
     cashedOut: true,
@@ -341,13 +344,13 @@ router.post('/mines/cashout', requireAuth, (req, res) => {
 });
 
 // ============== TOWERS ==============
-router.post('/towers/start', requireAuth, (req, res) => {
-  const config = requireEnabledConfig('towers', res);
+router.post('/towers/start', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('towers', res);
   if (!config) return;
   const bet = validateBet(config, req.body?.bet, res);
   if (bet === null) return;
   try {
-    const newBalance = debit(req.user.id, bet, 'towers');
+    const newBalance = await debit(req.user.id, bet, 'towers');
     const { rows, cols, badPerRow } = config.params;
     const badCells = Array.from({ length: rows }, () => towersRowBadIndex(cols));
     const sessionId = createSession(req.user.id, 'towers', {
@@ -366,7 +369,7 @@ router.post('/towers/start', requireAuth, (req, res) => {
   }
 });
 
-router.post('/towers/climb', requireAuth, (req, res) => {
+router.post('/towers/climb', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'towers');
   if (!session) return res.status(404).json({ error: 'Sesión de towers no encontrada o expirada' });
   const state = session.state;
@@ -377,7 +380,7 @@ router.post('/towers/climb', requireAuth, (req, res) => {
   if (col === badCol) {
     state.finished = true;
     updateSession(session.id, state);
-    const { payout, newBalance } = settle(req.user.id, 'towers', state.bet, 0, 'loss', {
+    const { payout, newBalance } = await settle(req.user.id, 'towers', state.bet, 0, 'loss', {
       badCells: state.badCells,
       reachedRow: state.currentRow,
     });
@@ -392,7 +395,7 @@ router.post('/towers/climb', requireAuth, (req, res) => {
 
   if (atTop) {
     state.finished = true;
-    const { payout, newBalance } = settle(req.user.id, 'towers', state.bet, multiplier, 'win', {
+    const { payout, newBalance } = await settle(req.user.id, 'towers', state.bet, multiplier, 'win', {
       badCells: state.badCells,
       reachedRow: state.currentRow,
     });
@@ -403,13 +406,13 @@ router.post('/towers/climb', requireAuth, (req, res) => {
   res.json({ finished: false, currentRow: state.currentRow, multiplier });
 });
 
-router.post('/towers/cashout', requireAuth, (req, res) => {
+router.post('/towers/cashout', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'towers');
   if (!session) return res.status(404).json({ error: 'Sesión de towers no encontrada o expirada' });
   const state = session.state;
   if (state.finished) return res.status(400).json({ error: 'Esta partida ya terminó' });
   const multiplier = state.currentRow > 0 ? towersFairMultiplier(state.cols, state.badPerRow, state.currentRow, state.houseEdge ?? 0.04) : 1;
-  const { payout, newBalance } = settle(req.user.id, 'towers', state.bet, multiplier, 'win', {
+  const { payout, newBalance } = await settle(req.user.id, 'towers', state.bet, multiplier, 'win', {
     reachedRow: state.currentRow,
     cashedOut: true,
   });
@@ -418,13 +421,13 @@ router.post('/towers/cashout', requireAuth, (req, res) => {
 });
 
 // ============== HI-LO ==============
-router.post('/hilo/start', requireAuth, (req, res) => {
-  const config = requireEnabledConfig('hilo', res);
+router.post('/hilo/start', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('hilo', res);
   if (!config) return;
   const bet = validateBet(config, req.body?.bet, res);
   if (bet === null) return;
   try {
-    const newBalance = debit(req.user.id, bet, 'hilo');
+    const newBalance = await debit(req.user.id, bet, 'hilo');
     const suits = ['♠', '♥', '♦', '♣'];
     const ranksArr = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     let deck = [];
@@ -448,7 +451,7 @@ router.post('/hilo/start', requireAuth, (req, res) => {
   }
 });
 
-router.post('/hilo/guess', requireAuth, (req, res) => {
+router.post('/hilo/guess', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'hilo');
   if (!session) return res.status(404).json({ error: 'Sesión de hi-lo no encontrada o expirada' });
   const state = session.state;
@@ -465,7 +468,7 @@ router.post('/hilo/guess', requireAuth, (req, res) => {
   if (!correct) {
     state.finished = true;
     updateSession(session.id, state);
-    const { payout, newBalance } = settle(req.user.id, 'hilo', state.bet, 0, 'loss', { previousCard: state.current, nextCard: next });
+    const { payout, newBalance } = await settle(req.user.id, 'hilo', state.bet, 0, 'loss', { previousCard: state.current, nextCard: next });
     endSession(session.id);
     return res.json({ finished: true, correct: false, nextCard: next, payout, newBalance });
   }
@@ -478,7 +481,7 @@ router.post('/hilo/guess', requireAuth, (req, res) => {
 
   if (state.deck.length === 0) {
     state.finished = true;
-    const { payout, newBalance } = settle(req.user.id, 'hilo', state.bet, state.cumMultiplier, 'win', { streak: state.streak });
+    const { payout, newBalance } = await settle(req.user.id, 'hilo', state.bet, state.cumMultiplier, 'win', { streak: state.streak });
     endSession(session.id);
     return res.json({ finished: true, correct: true, deckEmpty: true, nextCard: next, multiplier: state.cumMultiplier, payout, newBalance });
   }
@@ -486,25 +489,25 @@ router.post('/hilo/guess', requireAuth, (req, res) => {
   res.json({ finished: false, correct: true, nextCard: next, streak: state.streak, multiplier: Math.round(state.cumMultiplier * 10000) / 10000 });
 });
 
-router.post('/hilo/cashout', requireAuth, (req, res) => {
+router.post('/hilo/cashout', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'hilo');
   if (!session) return res.status(404).json({ error: 'Sesión de hi-lo no encontrada o expirada' });
   const state = session.state;
   if (state.finished) return res.status(400).json({ error: 'Esta partida ya terminó' });
   const multiplier = state.cumMultiplier || 1;
-  const { payout, newBalance } = settle(req.user.id, 'hilo', state.bet, multiplier, 'win', { streak: state.streak, cashedOut: true });
+  const { payout, newBalance } = await settle(req.user.id, 'hilo', state.bet, multiplier, 'win', { streak: state.streak, cashedOut: true });
   endSession(session.id);
   res.json({ finished: true, multiplier, payout, newBalance });
 });
 
 // ============== CRASH ==============
-router.post('/crash/start', requireAuth, (req, res) => {
-  const config = requireEnabledConfig('crash', res);
+router.post('/crash/start', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('crash', res);
   if (!config) return;
   const bet = validateBet(config, req.body?.bet, res);
   if (bet === null) return;
   try {
-    const newBalance = debit(req.user.id, bet, 'crash');
+    const newBalance = await debit(req.user.id, bet, 'crash');
     const { crashPoint, startedAt } = crashStart(config.params.houseEdge ?? 0.04);
     const sessionId = createSession(req.user.id, 'crash', { bet, crashPoint, startedAt, finished: false });
     res.json({ sessionId, newBalance });
@@ -513,7 +516,7 @@ router.post('/crash/start', requireAuth, (req, res) => {
   }
 });
 
-router.post('/crash/cashout', requireAuth, (req, res) => {
+router.post('/crash/cashout', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'crash');
   if (!session) return res.status(404).json({ error: 'Sesión de crash no encontrada o expirada' });
   const state = session.state;
@@ -523,7 +526,7 @@ router.post('/crash/cashout', requireAuth, (req, res) => {
 
   state.finished = true;
   if (currentMultiplier >= state.crashPoint) {
-    const { payout, newBalance } = settle(req.user.id, 'crash', state.bet, 0, 'loss', {
+    const { payout, newBalance } = await settle(req.user.id, 'crash', state.bet, 0, 'loss', {
       crashPoint: state.crashPoint,
       attemptedAt: state.crashPoint,
     });
@@ -531,7 +534,7 @@ router.post('/crash/cashout', requireAuth, (req, res) => {
     return res.json({ finished: true, crashed: true, crashPoint: state.crashPoint, payout, newBalance });
   }
 
-  const { payout, newBalance } = settle(req.user.id, 'crash', state.bet, currentMultiplier, 'win', {
+  const { payout, newBalance } = await settle(req.user.id, 'crash', state.bet, currentMultiplier, 'win', {
     crashPoint: state.crashPoint,
     cashedOutAt: currentMultiplier,
   });
@@ -539,7 +542,7 @@ router.post('/crash/cashout', requireAuth, (req, res) => {
   res.json({ finished: true, crashed: false, multiplier: currentMultiplier, crashPoint: state.crashPoint, payout, newBalance });
 });
 
-router.post('/crash/status', requireAuth, (req, res) => {
+router.post('/crash/status', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'crash');
   if (!session) return res.status(404).json({ error: 'Sesión no encontrada' });
   const elapsed = Date.now() - session.state.startedAt;
@@ -549,13 +552,13 @@ router.post('/crash/status', requireAuth, (req, res) => {
 });
 
 // ============== VIDEO POKER ==============
-router.post('/videopoker/deal', requireAuth, (req, res) => {
-  const config = requireEnabledConfig('videopoker', res);
+router.post('/videopoker/deal', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('videopoker', res);
   if (!config) return;
   const bet = validateBet(config, req.body?.bet, res);
   if (bet === null) return;
   try {
-    const newBalance = debit(req.user.id, bet, 'videopoker');
+    const newBalance = await debit(req.user.id, bet, 'videopoker');
     const { deck, hand } = videoPokerDeal(config.params);
     const sessionId = createSession(req.user.id, 'videopoker', { bet, deck, hand, finished: false });
     res.json({ sessionId, hand, newBalance });
@@ -564,7 +567,7 @@ router.post('/videopoker/deal', requireAuth, (req, res) => {
   }
 });
 
-router.post('/videopoker/draw', requireAuth, (req, res) => {
+router.post('/videopoker/draw', requireAuth, async (req, res) => {
   const session = getSession(req.body?.sessionId, req.user.id, 'videopoker');
   if (!session) return res.status(404).json({ error: 'Sesión de video poker no encontrada o expirada' });
   const holds = Array.isArray(req.body?.holds) ? req.body.holds.map(Number) : [];
@@ -572,7 +575,7 @@ router.post('/videopoker/draw', requireAuth, (req, res) => {
   const finalHand = videoPokerDraw(state, holds);
   const evaluation = evaluatePokerHand(finalHand);
   const outcome = evaluation.mult > 0 ? 'win' : 'loss';
-  const { payout, newBalance } = settle(req.user.id, 'videopoker', state.bet, evaluation.mult, outcome, {
+  const { payout, newBalance } = await settle(req.user.id, 'videopoker', state.bet, evaluation.mult, outcome, {
     finalHand,
     handName: evaluation.name,
   });

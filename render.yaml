@@ -12,3 +12,7 @@ services:
         generateValue: true
       - key: STARTING_CREDITS
         value: "5000"
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false

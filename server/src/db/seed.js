@@ -23,42 +23,38 @@ const GAMES = [
 
 const insertGame = db.prepare(`
   INSERT INTO game_configs (game_key, name, rtp, min_bet, max_bet, params, enabled)
-  VALUES (@key, @name, @rtp, @min, @max, @params, 1)
+  VALUES (?, ?, ?, ?, ?, ?, 1)
   ON CONFLICT(game_key) DO NOTHING
 `);
 
-const tx = db.transaction(() => {
-  for (const g of GAMES) {
-    insertGame.run({ ...g, params: JSON.stringify(g.params) });
-  }
+async function upsertUser(username, email, password, role, credits, avatar) {
+  const existing = await db.prepare('SELECT id FROM users WHERE username = ?').get(username);
+  if (existing) return existing.id;
+  const hash = bcrypt.hashSync(password, 10);
+  const info = await db
+    .prepare('INSERT INTO users (username, email, password_hash, role, avatar, credits) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(username, email, hash, role, avatar, credits);
+  return info.lastInsertRowid;
+}
 
-  const upsertUser = (username, email, password, role, credits, avatar) => {
-    const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);
-    if (existing) return existing.id;
-    const hash = bcrypt.hashSync(password, 10);
-    const info = db
-      .prepare('INSERT INTO users (username, email, password_hash, role, avatar, credits) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(username, email, hash, role, avatar, credits);
-    return info.lastInsertRowid;
-  };
+for (const g of GAMES) {
+  await insertGame.run(g.key, g.name, g.rtp, g.min, g.max, JSON.stringify(g.params));
+}
 
-  upsertUser('admin', 'admin@casino-demo.local', 'Admin123!', 'admin', 5_000_000, 'gem');
-  upsertUser('demo', 'demo@casino-demo.local', 'Demo123!', 'player', STARTING_CREDITS, 'spade');
-  upsertUser('lucky_maria', 'maria@casino-demo.local', 'Demo123!', 'player', 8200, 'flame');
-  upsertUser('vip_carlos', 'carlos@casino-demo.local', 'Demo123!', 'player', 24500, 'crown');
+await upsertUser('admin', 'admin@casino-demo.local', 'Admin123!', 'admin', 5_000_000, 'gem');
+await upsertUser('demo', 'demo@casino-demo.local', 'Demo123!', 'player', STARTING_CREDITS, 'spade');
+await upsertUser('lucky_maria', 'maria@casino-demo.local', 'Demo123!', 'player', 8200, 'flame');
+await upsertUser('vip_carlos', 'carlos@casino-demo.local', 'Demo123!', 'player', 24500, 'crown');
 
-  const insertPromo = db.prepare(`
-    INSERT INTO promo_codes (code, credits, max_uses, active, expires_at)
-    VALUES (?, ?, ?, 1, ?)
-    ON CONFLICT(code) DO NOTHING
-  `);
-  const future = new Date(Date.now() + 1000 * 60 * 60 * 24 * 90).toISOString();
-  insertPromo.run('WELCOME100', 100, 1000, future);
-  insertPromo.run('DEMO500', 500, 500, future);
-  insertPromo.run('LUCKY1000', 1000, 200, future);
-});
-
-tx();
+const insertPromo = db.prepare(`
+  INSERT INTO promo_codes (code, credits, max_uses, active, expires_at)
+  VALUES (?, ?, ?, 1, ?)
+  ON CONFLICT(code) DO NOTHING
+`);
+const future = new Date(Date.now() + 1000 * 60 * 60 * 24 * 90).toISOString();
+await insertPromo.run('WELCOME100', 100, 1000, future);
+await insertPromo.run('DEMO500', 500, 500, future);
+await insertPromo.run('LUCKY1000', 1000, 200, future);
 
 console.log('Seed completado.');
 console.log('   Admin  -> usuario: admin      contraseña: Admin123!');

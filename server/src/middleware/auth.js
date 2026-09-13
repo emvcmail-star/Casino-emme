@@ -9,13 +9,13 @@ export function signToken(user) {
   });
 }
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'No autenticado' });
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    const user = db.prepare('SELECT * FROM users WHERE id = ?').get(payload.id);
+    const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(payload.id);
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
     if (user.status === 'blocked') return res.status(403).json({ error: 'Cuenta bloqueada' });
     req.user = user;

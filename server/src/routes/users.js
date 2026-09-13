@@ -4,8 +4,8 @@ import { requireAuth, sanitizeUser } from '../middleware/auth.js';
 
 const router = Router();
 
-router.get('/profile', requireAuth, (req, res) => {
-  const stats = db
+router.get('/profile', requireAuth, async (req, res) => {
+  const stats = await db
     .prepare(
       `SELECT
         COUNT(*) as totalGames,
@@ -17,7 +17,7 @@ router.get('/profile', requireAuth, (req, res) => {
     )
     .get(req.user.id);
 
-  const promoUses = db
+  const promoUses = await db
     .prepare(
       `SELECT pc.code, pc.credits, pr.redeemed_at
        FROM promo_redemptions pr JOIN promo_codes pc ON pc.id = pr.promo_code_id
@@ -38,25 +38,25 @@ router.get('/profile', requireAuth, (req, res) => {
   });
 });
 
-router.patch('/profile', requireAuth, (req, res) => {
+router.patch('/profile', requireAuth, async (req, res) => {
   const { avatar } = req.body || {};
-  if (avatar) db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar, req.user.id);
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  if (avatar) await db.prepare('UPDATE users SET avatar = ? WHERE id = ?').run(avatar, req.user.id);
+  const user = await db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
   res.json({ user: sanitizeUser(user) });
 });
 
-router.get('/history', requireAuth, (req, res) => {
+router.get('/history', requireAuth, async (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 50, 200);
-  const rows = db
+  const rows = (await db
     .prepare('SELECT * FROM game_history WHERE user_id = ? ORDER BY created_at DESC LIMIT ?')
-    .all(req.user.id, limit)
+    .all(req.user.id, limit))
     .map((r) => ({ ...r, details: r.details ? JSON.parse(r.details) : null }));
   res.json({ history: rows });
 });
 
-router.get('/transactions', requireAuth, (req, res) => {
+router.get('/transactions', requireAuth, async (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 50, 200);
-  const rows = db
+  const rows = await db
     .prepare('SELECT * FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ?')
     .all(req.user.id, limit);
   res.json({ transactions: rows });
