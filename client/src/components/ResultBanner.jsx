@@ -1,12 +1,20 @@
 import React, { useEffect } from 'react';
 import { Trophy, Frown, Equal } from 'lucide-react';
 import { bigWinConfetti } from './confetti.js';
+import { useSound } from '../context/SoundContext.jsx';
 
 export default function ResultBanner({ result }) {
+  const { play } = useSound();
+
   useEffect(() => {
-    if (result && result.outcome === 'win' && result.payout >= (result.bet || 0) * 5) {
-      bigWinConfetti();
+    if (!result) return;
+    if (result.outcome === 'win') {
+      play('win');
+      if (result.payout >= (result.bet || 0) * 5) bigWinConfetti();
+    } else if (result.outcome === 'loss') {
+      play('loss');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
 
   if (!result) return null;

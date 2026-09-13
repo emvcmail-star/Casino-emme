@@ -12,6 +12,7 @@ import {
   playLimbo,
   playPlinko,
   playBaccarat,
+  playHorseRace,
 } from '../games/oneshot.js';
 import {
   blackjackDeal,
@@ -117,6 +118,7 @@ const ONE_SHOT_HANDLERS = {
   limbo: playLimbo,
   plinko: playPlinko,
   baccarat: playBaccarat,
+  horserace: playHorseRace,
 };
 
 router.post('/:key/play', requireAuth, async (req, res) => {

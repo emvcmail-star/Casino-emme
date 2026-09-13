@@ -1,9 +1,15 @@
 import React from 'react';
 import { Minus, Plus } from 'lucide-react';
+import { useSound } from '../context/SoundContext.jsx';
 
 export default function BetControls({ bet, setBet, min = 1, max = 1000, disabled }) {
+  const { play } = useSound();
   const step = bet < 10 ? 1 : bet < 100 ? 5 : 25;
   const clamp = (v) => Math.min(max, Math.max(min, Math.round(v * 100) / 100));
+  const setBetWithSound = (v) => {
+    play('click');
+    setBet(v);
+  };
 
   const chips = Array.from(
     new Set([min, Math.round(min * 10), Math.round(min * 100), max].map((v) => clamp(v)))
@@ -18,7 +24,7 @@ export default function BetControls({ bet, setBet, min = 1, max = 1000, disabled
             key={v}
             type="button"
             disabled={disabled}
-            onClick={() => setBet(v)}
+            onClick={() => setBetWithSound(v)}
             title={`${v} créditos`}
             className={`w-9 h-9 rounded-full border-2 flex items-center justify-center text-[9px] font-extrabold shrink-0 transition-all disabled:opacity-30 ${
               bet === v
@@ -33,7 +39,7 @@ export default function BetControls({ bet, setBet, min = 1, max = 1000, disabled
       <div className="flex items-center gap-2">
         <button
           disabled={disabled}
-          onClick={() => setBet(clamp(bet - step))}
+          onClick={() => setBetWithSound(clamp(bet - step))}
           className="btn-secondary !px-3 !py-2.5"
         >
           <Minus size={16} />
@@ -47,7 +53,7 @@ export default function BetControls({ bet, setBet, min = 1, max = 1000, disabled
         />
         <button
           disabled={disabled}
-          onClick={() => setBet(clamp(bet + step))}
+          onClick={() => setBetWithSound(clamp(bet + step))}
           className="btn-secondary !px-3 !py-2.5"
         >
           <Plus size={16} />
@@ -58,7 +64,7 @@ export default function BetControls({ bet, setBet, min = 1, max = 1000, disabled
           <button
             key={mult}
             disabled={disabled}
-            onClick={() => setBet(clamp(mult === 'max' ? max : bet * mult))}
+            onClick={() => setBetWithSound(clamp(mult === 'max' ? max : bet * mult))}
             className="btn-secondary !py-1 !px-2.5 text-xs flex-1"
           >
             {mult === 'max' ? 'MAX' : mult === 0.5 ? '½' : `x${mult}`}

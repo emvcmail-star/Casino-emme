@@ -12,7 +12,7 @@ export default function GamesList() {
   }, []);
 
   return (
-    <Layout title="Games" subtitle="15 juegos de casino con créditos virtuales">
+    <Layout title="Games" subtitle="16 juegos de casino con créditos virtuales">
       {!games ? (
         <SkeletonGrid count={15} />
       ) : (

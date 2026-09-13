@@ -36,8 +36,17 @@ export default function Crash() {
   const [points, setPoints] = useState([[0, GRAPH_H]]);
   const startRef = useRef(0);
   const rafRef = useRef(null);
+  const pollRef = useRef(null);
+  const sessionRef = useRef(null);
+  const settlingRef = useRef(false);
 
-  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
+  useEffect(
+    () => () => {
+      cancelAnimationFrame(rafRef.current);
+      clearInterval(pollRef.current);
+    },
+    []
+  );
 
   const tick = () => {
     const elapsed = Date.now() - startRef.current;
@@ -47,35 +56,18 @@ export default function Crash() {
     rafRef.current = requestAnimationFrame(tick);
   };
 
-  const start = async () => {
-    setError('');
-    setResult(null);
-    setCrashed(false);
-    setLoading(true);
-    try {
-      const data = await api.post('/games/crash/start', { bet });
-      updateCredits(data.newBalance);
-      setSession(data.sessionId);
-      startRef.current = Date.now();
-      setLive(1);
-      setPoints([[0, GRAPH_H]]);
-      setFlying(true);
-      rafRef.current = requestAnimationFrame(tick);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const cashout = async () => {
-    if (!session) return;
+  const settle = async (auto) => {
+    if (!sessionRef.current || settlingRef.current) return;
+    settlingRef.current = true;
+    const sid = sessionRef.current;
+    sessionRef.current = null;
     cancelAnimationFrame(rafRef.current);
+    clearInterval(pollRef.current);
     setFlying(false);
-    setLoading(true);
+    setSession(null);
+    if (!auto) setLoading(true);
     try {
-      const data = await api.post('/games/crash/cashout', { sessionId: session });
-      setSession(null);
+      const data = await api.post('/games/crash/cashout', { sessionId: sid });
       updateCredits(data.newBalance);
       const elapsed = Date.now() - startRef.current;
       if (data.crashed) {
@@ -94,8 +86,42 @@ export default function Crash() {
       setError(err.message);
     } finally {
       setLoading(false);
+      settlingRef.current = false;
     }
   };
+
+  const start = async () => {
+    setError('');
+    setResult(null);
+    setCrashed(false);
+    setLoading(true);
+    try {
+      const data = await api.post('/games/crash/start', { bet });
+      updateCredits(data.newBalance);
+      setSession(data.sessionId);
+      sessionRef.current = data.sessionId;
+      startRef.current = Date.now();
+      setLive(1);
+      setPoints([[0, GRAPH_H]]);
+      setFlying(true);
+      rafRef.current = requestAnimationFrame(tick);
+      pollRef.current = setInterval(async () => {
+        if (!sessionRef.current) return;
+        try {
+          const status = await api.post('/games/crash/status', { sessionId: sessionRef.current });
+          if (status.crashed) settle(true);
+        } catch {
+          // sesión expirada u otro error: se resolverá cuando el jugador intente retirar
+        }
+      }, 250);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cashout = () => settle(false);
 
   return (
     <GameShell

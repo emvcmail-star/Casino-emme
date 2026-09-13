@@ -1,4 +1,4 @@
-import { rand, randInt, pickWeighted, generateCrashPoint } from './rng.js';
+import { rand, randInt, pickWeighted, shuffle, generateCrashPoint } from './rng.js';
 import { createDeck, baccaratCardValue, baccaratHandValue } from './cards.js';
 
 // ---------- SLOTS ----------
@@ -170,6 +170,28 @@ export function playLimbo(params, bet, input) {
     multiplier: win ? target : 0,
     outcome: win ? 'win' : 'loss',
     details: { result, target },
+  };
+}
+
+// ---------- HORSE RACE ----------
+export function playHorseRace(params, bet, input) {
+  const horses = params.horses;
+  const pick = Number(input.horseIndex);
+  if (!Number.isInteger(pick) || pick < 0 || pick >= horses.length) {
+    throw { status: 400, message: 'Elige un caballo válido' };
+  }
+
+  const winnerIndex = horses.indexOf(pickWeighted(horses, horses.map((h) => h.probability)));
+  const rest = shuffle(horses.map((_, i) => i).filter((i) => i !== winnerIndex));
+  const finishOrder = [winnerIndex, ...rest];
+
+  const won = winnerIndex === pick;
+  const multiplier = won ? horses[pick].multiplier : 0;
+
+  return {
+    multiplier,
+    outcome: won ? 'win' : 'loss',
+    details: { pick, winnerIndex, finishOrder },
   };
 }
 

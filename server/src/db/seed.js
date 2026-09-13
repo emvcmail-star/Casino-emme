@@ -19,6 +19,22 @@ const GAMES = [
   { key: 'limbo', name: 'Limbo', rtp: 96, min: 1, max: 1000, params: { houseEdge: 0.04 } },
   { key: 'towers', name: 'Towers', rtp: 96, min: 1, max: 500, params: { rows: 8, cols: 3, badPerRow: 1, houseEdge: 0.04 } },
   { key: 'videopoker', name: 'Video Poker', rtp: 96.5, min: 1, max: 500, params: { variant: 'jacks-or-better' } },
+  {
+    key: 'horserace',
+    name: 'Horse Race',
+    rtp: 95.5,
+    min: 1,
+    max: 500,
+    params: {
+      horses: [
+        { name: 'Relámpago', color: '#ef4444', probability: 0.35, multiplier: 2.7 },
+        { name: 'Trueno', color: '#3b82f6', probability: 0.25, multiplier: 3.8 },
+        { name: 'Fantasma', color: '#22c55e', probability: 0.2, multiplier: 4.8 },
+        { name: 'Dorado', color: '#f59e0b', probability: 0.12, multiplier: 8 },
+        { name: 'Sombra', color: '#a855f7', probability: 0.08, multiplier: 12 },
+      ],
+    },
+  },
 ];
 
 const insertGame = db.prepare(`
