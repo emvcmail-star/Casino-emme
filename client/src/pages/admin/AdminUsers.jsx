@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, UserPlus, Ban, CheckCircle, RotateCcw, Coins, History } from 'lucide-react';
 import Layout from '../../components/Layout.jsx';
 import Modal from '../../components/Modal.jsx';
+import UserAvatar from '../../components/UserAvatar.jsx';
 import { SkeletonRows } from '../../components/Skeleton.jsx';
 import { api } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -84,7 +85,7 @@ export default function AdminUsers() {
   };
 
   return (
-    <Layout mode="admin" title="Users" subtitle="Gestión de usuarios de la demo">
+    <Layout mode="admin" title="Users" subtitle="Gestión de usuarios">
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <form onSubmit={search} className="flex gap-2 flex-1">
           <div className="relative flex-1">
@@ -117,7 +118,7 @@ export default function AdminUsers() {
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
                   <td className="px-4 py-3 text-white font-medium flex items-center gap-2">
-                    <span>{u.avatar}</span> {u.username}
+                    <UserAvatar avatar={u.avatar} username={u.username} size={26} /> {u.username}
                   </td>
                   <td className="px-4 py-3 text-slate-400">{u.email}</td>
                   <td className="px-4 py-3">
@@ -179,7 +180,7 @@ export default function AdminUsers() {
                 key={o.v}
                 onClick={() => setCreditForm((f) => ({ ...f, mode: o.v }))}
                 className={`rounded-lg py-2 text-sm font-semibold border ${
-                  creditForm.mode === o.v ? 'bg-electric-500/20 border-electric-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
+                  creditForm.mode === o.v ? 'bg-gold-500/20 border-gold-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
                 }`}
               >
                 {o.l}

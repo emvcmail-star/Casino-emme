@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function StatCard({ icon: Icon, label, value, accent = 'text-electric-400', loading }) {
+export default function StatCard({ icon: Icon, label, value, accent = 'text-gold-400', loading }) {
   return (
     <div className="glass-card glass-card-hover p-4 sm:p-5">
       <div className="flex items-center justify-between mb-2">

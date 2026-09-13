@@ -46,6 +46,6 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🎰 Casino DEMO API escuchando en http://localhost:${PORT}`);
-  console.log('   ⚠️  Modo demostración: sin dinero real, solo créditos virtuales.');
+  console.log(`Casino DEMO API escuchando en http://localhost:${PORT}`);
+  console.log('Modo demostración: sin dinero real, solo créditos virtuales.');
 });

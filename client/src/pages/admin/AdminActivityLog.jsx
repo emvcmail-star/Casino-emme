@@ -21,11 +21,11 @@ export default function AdminActivityLog() {
         <div className="glass-card divide-y divide-white/5">
           {rows.map((a) => (
             <div key={a.id} className="flex items-start gap-3 px-4 py-3.5">
-              <ClipboardList size={16} className="text-electric-400 mt-1 shrink-0" />
+              <ClipboardList size={16} className="text-gold-400 mt-1 shrink-0" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-white">
                   <span className="font-semibold">{a.admin_username}</span> ejecutó{' '}
-                  <span className="font-mono text-electric-300">{a.action}</span>
+                  <span className="font-mono text-gold-300">{a.action}</span>
                   {a.target && <> sobre <span className="text-slate-300">{a.target}</span></>}
                 </p>
                 {a.details && (

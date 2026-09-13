@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti';
 export function bigWinConfetti() {
   const duration = 2200;
   const end = Date.now() + duration;
-  const colors = ['#5eb1ff', '#2f7dff', '#ffffff', '#ffd166'];
+  const colors = ['#d4af37', '#f3dc9a', '#ffffff', '#b3273a'];
 
   (function frame() {
     confetti({

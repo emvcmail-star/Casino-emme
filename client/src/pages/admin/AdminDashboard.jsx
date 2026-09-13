@@ -14,7 +14,7 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <Layout mode="admin" title="Admin Dashboard" subtitle="Visión general de la plataforma demo">
+    <Layout mode="admin" title="Admin Dashboard" subtitle="Visión general de la plataforma">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={Users} label="Jugadores totales" value={stats?.totals.totalPlayers ?? 0} loading={!stats} />
         <StatCard icon={Ban} label="Jugadores bloqueados" value={stats?.totals.blockedPlayers ?? 0} accent="text-rose-400" loading={!stats} />
@@ -51,7 +51,10 @@ export default function AdminDashboard() {
               {stats.byGame.map((g) => (
                 <div key={g.game_key} className="flex items-center justify-between px-4 py-3">
                   <span className="text-white font-medium flex items-center gap-2">
-                    {GAME_META[g.game_key]?.emoji} {GAME_META[g.game_key]?.name || g.game_key}
+                    {GAME_META[g.game_key]?.icon
+                      ? React.createElement(GAME_META[g.game_key].icon, { size: 15, className: 'text-gold-400 shrink-0' })
+                      : null}
+                    {GAME_META[g.game_key]?.name || g.game_key}
                   </span>
                   <span className="text-xs text-slate-500">{g.plays} partidas</span>
                   <span className="text-sm text-slate-300 tabular-nums">{g.wagered} apostado</span>

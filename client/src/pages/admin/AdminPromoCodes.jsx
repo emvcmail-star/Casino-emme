@@ -79,7 +79,7 @@ export default function AdminPromoCodes() {
             <tbody>
               {codes.map((c) => (
                 <tr key={c.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-mono font-bold text-electric-300">{c.code}</td>
+                  <td className="px-4 py-3 font-mono font-bold text-gold-300">{c.code}</td>
                   <td className="px-4 py-3 text-slate-300">{c.credits}</td>
                   <td className="px-4 py-3 text-slate-300">
                     {c.uses_count}/{c.max_uses}

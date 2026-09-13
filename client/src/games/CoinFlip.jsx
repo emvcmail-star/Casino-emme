@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Coins } from 'lucide-react';
+import { Coins, Crown, Zap } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
 import GameShell from './GameShell.jsx';
@@ -51,7 +51,7 @@ export default function CoinFlip() {
                   disabled={flipping}
                   onClick={() => setChoice(o.v)}
                   className={`rounded-lg py-2 text-sm font-semibold border ${
-                    choice === o.v ? 'bg-electric-500/20 border-electric-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
+                    choice === o.v ? 'bg-gold-500/20 border-gold-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
                   }`}
                 >
                   {o.l}
@@ -68,11 +68,15 @@ export default function CoinFlip() {
       table={
         <>
           <div
-            className={`w-32 h-32 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 flex items-center justify-center text-5xl shadow-glow mb-6 ${
+            className={`w-32 h-32 rounded-full bg-gradient-to-br from-gold-300 to-gold-600 flex items-center justify-center shadow-glow mb-6 text-base-950 ${
               flipping ? 'animate-spin-slow' : ''
             }`}
           >
-            {result ? (result.details.result === 'heads' ? '👑' : '⚡') : '🪙'}
+            {result ? (
+              result.details.result === 'heads' ? <Crown size={48} strokeWidth={1.75} /> : <Zap size={48} strokeWidth={1.75} />
+            ) : (
+              <Coins size={48} strokeWidth={1.75} />
+            )}
           </div>
           {result && <ResultBanner result={result} />}
         </>

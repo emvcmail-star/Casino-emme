@@ -19,16 +19,24 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <Layout title={`Welcome back, ${user?.username}`} subtitle="Panel principal de tu cuenta demo">
-      <div className="mb-6 glass-card p-5 sm:p-6 bg-gradient-to-br from-electric-600/15 to-transparent border-electric-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+    <Layout title={`Welcome back, ${user?.username}`} subtitle="Panel principal de tu cuenta">
+      <div className="mb-6 glass-card p-5 sm:p-6 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-25"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1708919166614-60f3d21b4284?auto=format&fit=crop&w=1400&q=70')",
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-base-900/95 via-base-900/70 to-transparent" />
+        <div className="relative">
           <p className="text-sm text-slate-400 mb-1">Saldo de créditos virtuales</p>
-          <p className="text-4xl font-extrabold text-white flex items-center gap-2">
-            <Coins className="text-amber-300" size={30} />
+          <p className="text-4xl font-extrabold text-white flex items-center gap-2 font-serif">
+            <Coins className="text-gold-300" size={30} />
             {Number(user?.credits ?? 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
           </p>
         </div>
-        <Link to="/promo-codes" className="btn-primary">
+        <Link to="/promo-codes" className="btn-primary relative">
           Canjear código promocional
         </Link>
       </div>
@@ -48,7 +56,7 @@ export default function Dashboard() {
 
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold text-white">Juegos disponibles</h2>
-        <Link to="/games" className="text-sm text-electric-400 hover:text-electric-300 font-medium">
+        <Link to="/games" className="text-sm text-gold-400 hover:text-gold-300 font-medium">
           Ver todos →
         </Link>
       </div>

@@ -13,7 +13,7 @@ const ICONS = {
 const STYLES = {
   success: 'border-emerald-400/30 text-emerald-300',
   error: 'border-rose-400/30 text-rose-300',
-  info: 'border-electric-400/30 text-electric-300',
+  info: 'border-gold-400/30 text-gold-300',
   bonus: 'border-amber-400/30 text-amber-300',
 };
 

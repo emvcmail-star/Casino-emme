@@ -52,7 +52,7 @@ export default function Dice() {
                   disabled={rolling}
                   onClick={() => setDirection(d)}
                   className={`rounded-lg py-2 text-sm font-semibold border ${
-                    direction === d ? 'bg-electric-500/20 border-electric-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
+                    direction === d ? 'bg-gold-500/20 border-gold-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
                   }`}
                 >
                   {d === 'under' ? 'Menos que' : 'Más que'}
@@ -69,7 +69,7 @@ export default function Dice() {
               value={target}
               disabled={rolling}
               onChange={(e) => setTarget(Number(e.target.value))}
-              className="w-full accent-electric-500"
+              className="w-full accent-gold-500"
             />
           </div>
           <div className="flex justify-between text-xs text-slate-500">

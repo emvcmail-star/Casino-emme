@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCw } from 'lucide-react';
+import { RotateCw, Skull } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
 import GameShell from './GameShell.jsx';
@@ -72,7 +72,9 @@ export default function Wheel() {
                   className="absolute inset-0 flex justify-center"
                   style={{ transform: `rotate(${i * anglePer + anglePer / 2}deg)` }}
                 >
-                  <span className="text-xs font-bold text-white mt-2">{s === 0 ? '💀' : `x${s}`}</span>
+                  <span className="text-xs font-bold text-white mt-2 flex items-center gap-0.5">
+                    {s === 0 ? <Skull size={13} /> : `x${s}`}
+                  </span>
                 </div>
               ))}
             </div>

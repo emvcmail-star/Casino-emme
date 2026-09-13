@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Play, RotateCcw } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
+import PlayingCard from '../components/PlayingCard.jsx';
 import GameShell from './GameShell.jsx';
 import { useLastPlays, LastPlaysList } from './useLastPlays.jsx';
 import { api } from '../api/client.js';
@@ -89,18 +90,9 @@ export default function VideoPoker() {
                 key={i}
                 onClick={() => toggleHold(i)}
                 disabled={!inRound}
-                className={`w-16 h-24 rounded-lg flex flex-col items-center justify-center font-bold shadow transition-all ${
-                  c ? 'bg-white text-slate-900' : 'bg-white/5 border border-white/10'
-                } ${holds.includes(i) ? 'ring-2 ring-electric-400 -translate-y-2' : ''}`}
+                className={`rounded-lg transition-all ${holds.includes(i) ? 'ring-2 ring-gold-400 -translate-y-2' : ''}`}
               >
-                {c ? (
-                  <span className={c.suit === '♥' || c.suit === '♦' ? 'text-rose-600' : ''}>
-                    {c.rank}
-                    {c.suit}
-                  </span>
-                ) : (
-                  ''
-                )}
+                <PlayingCard rank={c?.rank} suit={c?.suit} hidden={!c} className="w-16 h-24" />
               </button>
             ))}
           </div>

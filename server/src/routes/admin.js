@@ -58,7 +58,7 @@ router.post('/users', (req, res) => {
   const hash = bcrypt.hashSync(String(password), 10);
   const info = db
     .prepare('INSERT INTO users (username, email, password_hash, role, credits, avatar) VALUES (?, ?, ?, ?, ?, ?)')
-    .run(username, email, hash, role, credits, '🎮');
+    .run(username, email, hash, role, credits, 'club');
   recordTransaction(info.lastInsertRowid, 'admin_credit', credits, credits, 'Cuenta de prueba creada por admin');
   logAdminActivity(req.user.id, req.user.username, 'create_user', username, { credits, role });
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);

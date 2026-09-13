@@ -17,7 +17,7 @@ export function requireAuth(req, res, next) {
     const payload = jwt.verify(token, JWT_SECRET);
     const user = db.prepare('SELECT * FROM users WHERE id = ?').get(payload.id);
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
-    if (user.status === 'blocked') return res.status(403).json({ error: 'Cuenta bloqueada (demo)' });
+    if (user.status === 'blocked') return res.status(403).json({ error: 'Cuenta bloqueada' });
     req.user = user;
     next();
   } catch (err) {

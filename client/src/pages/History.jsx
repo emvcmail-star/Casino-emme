@@ -36,7 +36,10 @@ export default function History() {
               {history.map((h) => (
                 <tr key={h.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02]">
                   <td className="px-4 py-3 text-white font-medium flex items-center gap-2">
-                    <span>{GAME_META[h.game_key]?.emoji}</span> {GAME_META[h.game_key]?.name || h.game_key}
+                    {GAME_META[h.game_key]?.icon
+                      ? React.createElement(GAME_META[h.game_key].icon, { size: 15, className: 'text-gold-400 shrink-0' })
+                      : null}
+                    {GAME_META[h.game_key]?.name || h.game_key}
                   </td>
                   <td className="px-4 py-3 text-slate-300 tabular-nums">{h.bet_amount}</td>
                   <td className="px-4 py-3 text-slate-300 tabular-nums">x{Number(h.multiplier).toFixed(2)}</td>

@@ -45,7 +45,7 @@ export default function GamePage() {
   if (!Game) return <Navigate to="/games" replace />;
 
   return (
-    <Layout title={meta?.name || key} subtitle="Créditos virtuales · Modo demostración">
+    <Layout title={meta?.name || key} subtitle="Créditos virtuales, sin valor monetario">
       <Game gameKey={key} />
     </Layout>
   );

@@ -103,7 +103,7 @@ export default function Mines() {
               value={minesCount}
               disabled={inRound}
               onChange={(e) => setMinesCount(Number(e.target.value))}
-              className="w-full accent-electric-500"
+              className="w-full accent-gold-500"
             />
           </div>
           {!inRound ? (
@@ -125,7 +125,7 @@ export default function Mines() {
       }
       table={
         <>
-          <div className="grid grid-cols-5 gap-2 w-full max-w-sm">
+          <div className="grid grid-cols-5 gap-2.5 w-full max-w-sm">
             {Array.from({ length: GRID_SIZE }).map((_, i) => {
               const isRevealed = revealed.includes(i);
               const isMine = mines.includes(i);
@@ -135,18 +135,24 @@ export default function Mines() {
                   key={i}
                   onClick={() => reveal(i)}
                   disabled={!inRound || isRevealed || loading}
-                  className={`aspect-square rounded-xl border flex items-center justify-center text-xl transition-all duration-200
+                  className={`aspect-square rounded-2xl border flex items-center justify-center transition-all duration-200 shadow-inner-line
                     ${
                       showMine
                         ? isRevealed
-                          ? 'bg-rose-500/30 border-rose-400/50'
-                          : 'bg-rose-500/10 border-rose-400/20'
+                          ? 'bg-gradient-to-b from-crimson-500/40 to-crimson-700/30 border-crimson-400/50 shadow-[0_0_16px_rgba(179,39,58,0.4)]'
+                          : 'bg-gradient-to-b from-crimson-500/10 to-crimson-700/5 border-crimson-400/20'
                         : isRevealed
-                        ? 'bg-emerald-500/20 border-emerald-400/40'
-                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                        ? 'bg-gradient-to-b from-emerald-400/25 to-emerald-600/10 border-emerald-400/40 shadow-[0_0_16px_rgba(52,211,153,0.25)] scale-[1.03]'
+                        : 'bg-gradient-to-b from-white/[0.06] to-white/[0.01] border-white/10 hover:border-gold-400/30 hover:-translate-y-0.5 hover:shadow-glow'
                     }`}
                 >
-                  {showMine ? '💣' : isRevealed ? <Gem className="text-emerald-300" size={18} /> : ''}
+                  {showMine ? (
+                    <Bomb className="text-crimson-300" size={20} strokeWidth={1.75} />
+                  ) : isRevealed ? (
+                    <Gem className="text-emerald-300" size={20} strokeWidth={1.75} fill="currentColor" fillOpacity={0.2} />
+                  ) : (
+                    ''
+                  )}
                 </button>
               );
             })}

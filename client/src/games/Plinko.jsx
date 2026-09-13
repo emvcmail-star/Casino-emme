@@ -59,7 +59,7 @@ export default function Plinko() {
                   disabled={dropping}
                   onClick={() => setRisk(r)}
                   className={`rounded-lg py-2 text-xs font-semibold border capitalize ${
-                    risk === r ? 'bg-electric-500/20 border-electric-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
+                    risk === r ? 'bg-gold-500/20 border-gold-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
                   }`}
                 >
                   {r}
@@ -89,7 +89,7 @@ export default function Plinko() {
               {table.map((m, i) => (
                 <div
                   key={i}
-                  className={`flex-1 text-center text-[10px] font-bold py-1.5 rounded ${m >= 5 ? 'bg-amber-400/20 text-amber-300' : m >= 1 ? 'bg-electric-400/15 text-electric-300' : 'bg-white/5 text-slate-500'}`}
+                  className={`flex-1 text-center text-[10px] font-bold py-1.5 rounded ${m >= 5 ? 'bg-amber-400/20 text-amber-300' : m >= 1 ? 'bg-gold-400/15 text-gold-300' : 'bg-white/5 text-slate-500'}`}
                 >
                   {m}x
                 </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Layers } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
+import PlayingCard from '../components/PlayingCard.jsx';
 import GameShell from './GameShell.jsx';
 import { useLastPlays, LastPlaysList } from './useLastPlays.jsx';
 import { api } from '../api/client.js';
@@ -10,13 +11,10 @@ import { useAuth } from '../context/AuthContext.jsx';
 function Hand({ cards, label }) {
   return (
     <div className="text-center">
-      <p className="text-xs text-slate-500 mb-1.5">{label}</p>
+      <p className="text-xs text-emerald-200/60 mb-1.5 tracking-wide uppercase">{label}</p>
       <div className="flex gap-1.5 justify-center">
         {cards?.map((c, i) => (
-          <div key={i} className="w-10 h-14 rounded-md bg-white text-slate-900 flex items-center justify-center text-sm font-bold shadow">
-            {c.rank}
-            {c.suit}
-          </div>
+          <PlayingCard key={i} rank={c.rank} suit={c.suit} className="w-10 h-14" />
         ))}
       </div>
     </div>
@@ -68,7 +66,7 @@ export default function Baccarat() {
                   disabled={dealing}
                   onClick={() => setBetType(o.v)}
                   className={`rounded-lg py-2 text-xs font-semibold border ${
-                    betType === o.v ? 'bg-electric-500/20 border-electric-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
+                    betType === o.v ? 'bg-gold-500/20 border-gold-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
                   }`}
                 >
                   {o.l}
@@ -82,13 +80,14 @@ export default function Baccarat() {
         </>
       }
       table={
-        <>
+        <div className="felt-table w-full min-h-[280px] flex flex-col items-center justify-center py-8 px-4">
+          <div className="ribbon mb-8">BACCARAT</div>
           <div className="flex gap-10 mb-6">
             <Hand cards={result?.details.playerHand} label={`Jugador (${result?.details.playerValue ?? ''})`} />
             <Hand cards={result?.details.bankerHand} label={`Banca (${result?.details.bankerValue ?? ''})`} />
           </div>
-          {result && <ResultBanner result={result} />}
-        </>
+          {result && <div className="w-full max-w-xs"><ResultBanner result={result} /></div>}
+        </div>
       }
       history={<LastPlaysList plays={plays} render={(p) => p.label} />}
     />

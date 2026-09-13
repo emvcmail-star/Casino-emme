@@ -12,12 +12,12 @@ export default function Bonuses() {
       title: 'Bono de bienvenida',
       desc: 'Créditos virtuales otorgados automáticamente al registrarte.',
       status: 'Reclamado al crear tu cuenta',
-      color: 'text-electric-300',
+      color: 'text-gold-300',
     },
     {
       icon: Ticket,
       title: 'Códigos promocionales',
-      desc: 'Canjea códigos como WELCOME100, DEMO500 o LUCKY1000 por más créditos.',
+      desc: 'Canjea códigos secretos, repartidos por tiempo limitado, por más créditos virtuales.',
       status: 'Disponible',
       cta: { to: '/promo-codes', label: 'Ver códigos' },
       color: 'text-amber-300',
@@ -34,13 +34,13 @@ export default function Bonuses() {
       icon: Trophy,
       title: 'Grandes premios',
       desc: 'Los multiplicadores más altos aparecen en Slots, Crash y Plinko en modo riesgo alto.',
-      status: 'Solo demostración',
+      status: 'Solo entretenimiento',
       color: 'text-emerald-300',
     },
   ];
 
   return (
-    <Layout title="Bonuses" subtitle="Formas de conseguir más créditos virtuales (demo)">
+    <Layout title="Bonuses" subtitle="Formas de conseguir más créditos virtuales">
       <div className="glass-card p-4 mb-6 border-amber-400/20 bg-amber-400/5 text-sm text-amber-200">
         Todos los bonos son créditos virtuales sin valor monetario, pensados solo para pruebas.
       </div>
@@ -55,7 +55,7 @@ export default function Bonuses() {
             <div className="flex items-center justify-between mt-4">
               <span className="pill bg-white/5 text-slate-400">{b.status}</span>
               {b.cta && (
-                <Link to={b.cta.to} className="text-sm text-electric-400 hover:text-electric-300 font-semibold">
+                <Link to={b.cta.to} className="text-sm text-gold-400 hover:text-gold-300 font-semibold">
                   {b.cta.label} →
                 </Link>
               )}

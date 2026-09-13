@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Rocket, Wallet } from 'lucide-react';
+import { Rocket, Wallet, Flame } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
 import GameShell from './GameShell.jsx';
@@ -102,9 +102,11 @@ export default function Crash() {
         <>
           <div className="relative w-full h-56 flex items-center justify-center overflow-hidden">
             <div
-              className={`text-6xl transition-transform duration-100 ${flying ? '-translate-y-10' : ''} ${crashed ? 'opacity-20 rotate-45' : ''}`}
+              className={`transition-transform duration-100 ${flying ? '-translate-y-10' : ''} ${
+                crashed ? 'opacity-30 rotate-45 text-crimson-400' : 'text-gold-300'
+              }`}
             >
-              {crashed ? '💥' : '🚀'}
+              {crashed ? <Flame size={72} strokeWidth={1.4} /> : <Rocket size={72} strokeWidth={1.4} />}
             </div>
           </div>
           <div className={`text-5xl font-extrabold tabular-nums ${crashed ? 'text-rose-400' : flying ? 'text-emerald-400' : 'text-white'}`}>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building2, Wallet } from 'lucide-react';
+import { Building2, Wallet, Check, Bomb, X } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
 import GameShell from './GameShell.jsx';
@@ -132,14 +132,20 @@ export default function Towers() {
                       disabled={!isActive || loading}
                       onClick={() => climb(col)}
                       className={`h-10 rounded-lg border text-sm font-bold flex items-center justify-center transition-all
-                        ${isActive ? 'bg-white/5 border-white/10 hover:bg-electric-500/20 hover:border-electric-400/40' : ''}
+                        ${isActive ? 'bg-white/5 border-white/10 hover:bg-gold-500/20 hover:border-gold-400/40' : ''}
                         ${isPast && !wasChosen ? 'bg-white/[0.02] border-white/5' : ''}
                         ${wasChosen && isBad ? 'bg-rose-500/30 border-rose-400/50' : ''}
                         ${wasChosen && !isBad ? 'bg-emerald-500/30 border-emerald-400/50' : ''}
                         ${!isActive && !isPast ? 'opacity-30' : ''}
                       `}
                     >
-                      {wasChosen ? (isBad ? '💥' : '✓') : isBad && badCells.length ? '💣' : ''}
+                      {wasChosen ? (
+                        isBad ? <X size={16} className="text-rose-300" /> : <Check size={16} className="text-emerald-300" />
+                      ) : isBad && badCells.length ? (
+                        <Bomb size={15} className="text-rose-400/70" />
+                      ) : (
+                        ''
+                      )}
                     </button>
                   );
                 })}

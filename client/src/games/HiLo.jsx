@@ -1,21 +1,15 @@
 import React, { useState } from 'react';
-import { ArrowUp, ArrowDown, Wallet, Play } from 'lucide-react';
+import { ArrowUp, ArrowDown, ArrowRight, Wallet, Play } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
+import PlayingCard from '../components/PlayingCard.jsx';
 import GameShell from './GameShell.jsx';
 import { useLastPlays, LastPlaysList } from './useLastPlays.jsx';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
 function Card({ card, hidden }) {
-  if (!card || hidden) return <div className="w-16 h-24 rounded-lg bg-gradient-to-br from-electric-600 to-electric-800 border border-white/20" />;
-  const isRed = card.suit === '♥' || card.suit === '♦';
-  return (
-    <div className={`w-16 h-24 rounded-lg bg-white flex items-center justify-center text-2xl font-bold shadow ${isRed ? 'text-rose-600' : 'text-slate-900'}`}>
-      {card.rank}
-      {card.suit}
-    </div>
-  );
+  return <PlayingCard rank={card?.rank} suit={card?.suit} hidden={hidden || !card} className="w-16 h-24" />;
 }
 
 export default function HiLo() {
@@ -132,7 +126,7 @@ export default function HiLo() {
         <>
           <div className="flex gap-6 items-center mb-6">
             <Card card={current} />
-            <span className="text-2xl text-slate-600">→</span>
+            <ArrowRight size={26} className="text-slate-600" />
             <Card card={next} hidden={!next} />
           </div>
           {result && <ResultBanner result={result} />}

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Play, Plus, Hand as HandIcon, Copy } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
+import PlayingCard from '../components/PlayingCard.jsx';
 import GameShell from './GameShell.jsx';
 import { useLastPlays, LastPlaysList } from './useLastPlays.jsx';
 import { api } from '../api/client.js';
@@ -10,16 +11,9 @@ import { useAuth } from '../context/AuthContext.jsx';
 function Cards({ cards }) {
   return (
     <div className="flex gap-1.5 justify-center">
-      {cards?.map((c, i) =>
-        c.hidden ? (
-          <div key={i} className="w-11 h-16 rounded-md bg-gradient-to-br from-electric-600 to-electric-800 border border-white/20" />
-        ) : (
-          <div key={i} className="w-11 h-16 rounded-md bg-white text-slate-900 flex items-center justify-center text-sm font-bold shadow">
-            {c.rank}
-            {c.suit}
-          </div>
-        )
-      )}
+      {cards?.map((c, i) => (
+        <PlayingCard key={i} rank={c.rank} suit={c.suit} hidden={c.hidden} className="w-11 h-16" />
+      ))}
     </div>
   );
 }
@@ -122,17 +116,18 @@ export default function Blackjack() {
         </>
       }
       table={
-        <>
-          <div className="mb-6 text-center">
-            <p className="text-xs text-slate-500 mb-1.5">Dealer {hand ? `(${handTotal(hand.dealer)})` : ''}</p>
+        <div className="felt-table w-full min-h-[280px] flex flex-col items-center justify-center py-8 px-4">
+          <div className="ribbon mb-8">BLACKJACK PAGA 3 A 2</div>
+          <div className="mb-8 text-center">
+            <p className="text-xs text-emerald-200/60 mb-1.5 tracking-wide uppercase">Dealer {hand ? `(${handTotal(hand.dealer)})` : ''}</p>
             <Cards cards={hand?.dealer} />
           </div>
           <div className="text-center">
-            <p className="text-xs text-slate-500 mb-1.5">Tú {hand ? `(${handTotal(hand.player)})` : ''}</p>
+            <p className="text-xs text-emerald-200/60 mb-1.5 tracking-wide uppercase">Tú {hand ? `(${handTotal(hand.player)})` : ''}</p>
             <Cards cards={hand?.player} />
           </div>
-          {result && <div className="mt-6 w-full"><ResultBanner result={result} /></div>}
-        </>
+          {result && <div className="mt-6 w-full max-w-xs"><ResultBanner result={result} /></div>}
+        </div>
       }
       history={<LastPlaysList plays={plays} />}
     />

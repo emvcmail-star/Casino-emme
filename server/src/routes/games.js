@@ -45,7 +45,7 @@ function requireEnabledConfig(gameKey, res) {
     return null;
   }
   if (!config.enabled) {
-    res.status(403).json({ error: 'Este juego está desactivado temporalmente (demo)' });
+    res.status(403).json({ error: 'Este juego está desactivado temporalmente' });
     return null;
   }
   return config;

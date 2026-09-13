@@ -9,36 +9,40 @@ html, body, #root {
 body {
   @apply bg-base-950 text-slate-100 font-display antialiased;
   background-image:
-    radial-gradient(circle at 15% 0%, rgba(47,125,255,0.16), transparent 45%),
-    radial-gradient(circle at 85% 20%, rgba(94,177,255,0.12), transparent 40%),
-    linear-gradient(180deg, #050a1a 0%, #070c22 100%);
+    radial-gradient(circle at 12% 0%, rgba(212,175,55,0.10), transparent 42%),
+    radial-gradient(circle at 88% 15%, rgba(179,39,58,0.08), transparent 40%),
+    linear-gradient(180deg, #08070a 0%, #0c0a0d 55%, #08070a 100%);
   background-attachment: fixed;
   min-height: 100vh;
 }
 
+h1, h2, h3, .font-serif {
+  font-family: '"Playfair Display"', Georgia, serif;
+}
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(94,177,255,0.25); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(94,177,255,0.45); }
+::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.25); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.45); }
 
 @layer components {
   .glass-card {
-    @apply bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-2xl shadow-card;
+    @apply bg-white/[0.035] backdrop-blur-xl border border-white/10 rounded-2xl shadow-card shadow-inner-line;
   }
   .glass-card-hover {
-    @apply transition-all duration-300 hover:border-electric-500/40 hover:shadow-glow hover:-translate-y-0.5;
+    @apply transition-all duration-300 hover:border-gold-500/40 hover:shadow-glow hover:-translate-y-0.5;
   }
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-electric-600 to-electric-400 px-5 py-2.5 font-semibold text-white shadow-glow transition-all duration-200 hover:shadow-glow-lg hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-glow disabled:hover:brightness-100;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-gold-500 to-gold-300 px-5 py-2.5 font-bold text-base-950 shadow-glow transition-all duration-200 hover:shadow-glow-lg hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:shadow-glow disabled:hover:brightness-100;
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 rounded-xl bg-white/5 border border-white/10 px-5 py-2.5 font-semibold text-slate-200 transition-all duration-200 hover:bg-white/10 hover:border-white/20 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed;
   }
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 px-5 py-2.5 font-semibold text-white shadow-[0_0_20px_rgba(244,63,94,0.35)] transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-crimson-600 to-crimson-500 px-5 py-2.5 font-semibold text-white shadow-[0_0_20px_rgba(179,39,58,0.35)] transition-all duration-200 hover:brightness-110 active:scale-[0.98] disabled:opacity-40;
   }
   .input-field {
-    @apply w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-electric-500/60 focus:bg-white/[0.07] focus:shadow-glow;
+    @apply w-full rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-slate-100 placeholder:text-slate-500 outline-none transition-all duration-200 focus:border-gold-500/60 focus:bg-white/[0.07] focus:shadow-glow;
   }
   .label-field {
     @apply block text-sm font-medium text-slate-400 mb-1.5;
@@ -55,5 +59,38 @@ body {
   }
   .pill {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+  .card-face {
+    @apply rounded-lg bg-gradient-to-b from-white to-slate-100 shadow-md relative flex flex-col items-center justify-center font-bold select-none;
+  }
+  .card-back {
+    @apply rounded-lg border border-gold-500/30 relative overflow-hidden;
+    background:
+      repeating-linear-gradient(135deg, rgba(212,175,55,0.12) 0 6px, transparent 6px 12px),
+      linear-gradient(160deg, #211d25 0%, #17141a 100%);
+  }
+  .felt-table {
+    @apply rounded-2xl border border-gold-500/15 relative overflow-hidden;
+    background:
+      radial-gradient(circle at 50% -10%, rgba(212,175,55,0.10), transparent 55%),
+      radial-gradient(ellipse at 50% 120%, rgba(0,0,0,0.5), transparent 60%),
+      linear-gradient(160deg, #12261d 0%, #0c1a14 65%, #0a1611 100%);
+    box-shadow: inset 0 0 0 1px rgba(212,175,55,0.08), inset 0 30px 60px rgba(0,0,0,0.35);
+  }
+  .ribbon {
+    @apply relative inline-flex items-center justify-center bg-base-800/90 border-y border-gold-500/25 text-gold-300 font-semibold text-xs tracking-wide px-6 py-1.5;
+  }
+  .ribbon::before,
+  .ribbon::after {
+    content: '';
+    @apply absolute top-0 bottom-0 w-0 border-y-[14px] border-y-transparent;
+  }
+  .ribbon::before {
+    left: -12px;
+    border-right: 12px solid theme('colors.base.800 / 90%');
+  }
+  .ribbon::after {
+    right: -12px;
+    border-left: 12px solid theme('colors.base.800 / 90%');
   }
 }

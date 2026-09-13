@@ -1,5 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 
 export function ProtectedRoute({ children }) {
@@ -20,7 +21,7 @@ export function AdminRoute({ children }) {
 function FullscreenLoader() {
   return (
     <div className="h-screen w-full flex items-center justify-center bg-base-950">
-      <div className="animate-spin-slow text-5xl">🎰</div>
+      <Loader2 size={40} className="animate-spin text-gold-400" strokeWidth={1.75} />
     </div>
   );
 }

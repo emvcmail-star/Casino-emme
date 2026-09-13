@@ -4,7 +4,7 @@ import { db } from './index.js';
 const STARTING_CREDITS = Number(process.env.STARTING_CREDITS || 5000);
 
 const GAMES = [
-  { key: 'slots', name: 'Slots', rtp: 96, min: 1, max: 500, params: { reels: 3, rows: 3, symbols: ['🍒', '🍋', '🔔', '⭐', '💎', '7️⃣'], weights: [30, 25, 18, 12, 9, 6], payTable: { '🍒': 2, '🍋': 3, '🔔': 5, '⭐': 10, '💎': 25, '7️⃣': 50 } } },
+  { key: 'slots', name: 'Slots', rtp: 96, min: 1, max: 500, params: { reels: 3, rows: 3, symbols: ['cherry', 'lemon', 'bell', 'star', 'diamond', 'seven'], weights: [30, 25, 18, 12, 9, 6], payTable: { cherry: 2, lemon: 3, bell: 5, star: 10, diamond: 25, seven: 50 } } },
   { key: 'roulette', name: 'Roulette', rtp: 97.3, min: 1, max: 1000, params: { type: 'european' } },
   { key: 'blackjack', name: 'Blackjack', rtp: 99, min: 1, max: 1000, params: { decks: 6, blackjackPayout: 1.5 } },
   { key: 'baccarat', name: 'Baccarat', rtp: 98.5, min: 1, max: 1000, params: { bankerCommission: 0.05 } },
@@ -42,10 +42,10 @@ const tx = db.transaction(() => {
     return info.lastInsertRowid;
   };
 
-  upsertUser('admin', 'admin@casino-demo.local', 'Admin123!', 'admin', 5_000_000, '🛡️');
-  upsertUser('demo', 'demo@casino-demo.local', 'Demo123!', 'player', STARTING_CREDITS, '🎰');
-  upsertUser('lucky_maria', 'maria@casino-demo.local', 'Demo123!', 'player', 8200, '🍀');
-  upsertUser('vip_carlos', 'carlos@casino-demo.local', 'Demo123!', 'player', 24500, '👑');
+  upsertUser('admin', 'admin@casino-demo.local', 'Admin123!', 'admin', 5_000_000, 'gem');
+  upsertUser('demo', 'demo@casino-demo.local', 'Demo123!', 'player', STARTING_CREDITS, 'spade');
+  upsertUser('lucky_maria', 'maria@casino-demo.local', 'Demo123!', 'player', 8200, 'flame');
+  upsertUser('vip_carlos', 'carlos@casino-demo.local', 'Demo123!', 'player', 24500, 'crown');
 
   const insertPromo = db.prepare(`
     INSERT INTO promo_codes (code, credits, max_uses, active, expires_at)
@@ -60,7 +60,7 @@ const tx = db.transaction(() => {
 
 tx();
 
-console.log('✅ Seed completado.');
+console.log('Seed completado.');
 console.log('   Admin  -> usuario: admin      contraseña: Admin123!');
 console.log('   Demo   -> usuario: demo       contraseña: Demo123!');
 console.log('   Códigos promo: WELCOME100, DEMO500, LUCKY1000');

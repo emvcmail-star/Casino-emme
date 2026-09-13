@@ -57,11 +57,11 @@ export default function AdminGameConfiguration() {
   const current = games?.find((g) => g.game_key === selected);
 
   return (
-    <Layout mode="admin" title="Game Configuration" subtitle="Parámetros matemáticos de los juegos DE DEMOSTRACIÓN">
+    <Layout mode="admin" title="Game Configuration" subtitle="Parámetros matemáticos de los juegos (solo testing)">
       <div className="glass-card p-4 mb-6 border-amber-400/20 bg-amber-400/5 flex items-start gap-3">
         <AlertTriangle className="text-amber-300 shrink-0 mt-0.5" size={20} />
         <p className="text-sm text-amber-200">
-          Estas opciones son exclusivamente para <strong>testing</strong> de la demo. Los resultados siempre se calculan con la
+          Estas opciones son exclusivamente para <strong>testing</strong>. Los resultados siempre se calculan con la
           configuración vigente en el momento de la apuesta y quedan registrados; nunca se modifican después de jugar.
         </p>
       </div>
@@ -76,7 +76,7 @@ export default function AdminGameConfiguration() {
                 key={g.game_key}
                 onClick={() => select(g)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left ${
-                  selected === g.game_key ? 'bg-electric-500/20 text-white' : 'text-slate-400 hover:bg-white/5'
+                  selected === g.game_key ? 'bg-gold-500/20 text-white' : 'text-slate-400 hover:bg-white/5'
                 }`}
               >
                 {GAME_META[g.game_key]?.emoji} {g.name}
@@ -87,7 +87,7 @@ export default function AdminGameConfiguration() {
           {form && current && (
             <div className="glass-card p-6 space-y-5">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <FlaskConical className="text-electric-400" size={20} /> {current.name}
+                <FlaskConical className="text-gold-400" size={20} /> {current.name}
               </h3>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
@@ -105,7 +105,7 @@ export default function AdminGameConfiguration() {
               </div>
 
               <label className="flex items-center gap-2 text-sm text-slate-300">
-                <input type="checkbox" checked={form.enabled} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} className="accent-electric-500 w-4 h-4" />
+                <input type="checkbox" checked={form.enabled} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} className="accent-gold-500 w-4 h-4" />
                 Juego activado
               </label>
 

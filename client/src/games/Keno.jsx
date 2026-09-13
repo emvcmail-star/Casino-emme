@@ -70,7 +70,7 @@ export default function Keno() {
                   onClick={() => togglePick(n)}
                   disabled={drawing}
                   className={`w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center border transition-all
-                    ${picked ? 'bg-electric-500/30 border-electric-400/60 text-white' : 'bg-white/5 border-white/10 text-slate-400'}
+                    ${picked ? 'bg-gold-500/30 border-gold-400/60 text-white' : 'bg-white/5 border-white/10 text-slate-400'}
                     ${hit && picked ? 'ring-2 ring-emerald-400' : ''}
                     ${hit && !picked ? 'bg-amber-400/20 border-amber-400/40' : ''}
                   `}

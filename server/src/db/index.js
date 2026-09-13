@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'player',
-  avatar TEXT NOT NULL DEFAULT '🎰',
+  avatar TEXT NOT NULL DEFAULT 'spade',
   credits REAL NOT NULL DEFAULT 0,
   status TEXT NOT NULL DEFAULT 'active',
   created_at TEXT NOT NULL DEFAULT (datetime('now'))

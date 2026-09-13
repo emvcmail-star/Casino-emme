@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Gamepad2, Trophy, TrendingDown, Coins, Calendar, Ticket } from 'lucide-react';
 import Layout from '../components/Layout.jsx';
 import StatCard from '../components/StatCard.jsx';
+import UserAvatar from '../components/UserAvatar.jsx';
+import { AVATAR_ICONS, AVATAR_KEYS } from '../components/avatars.js';
 import { SkeletonRows } from '../components/Skeleton.jsx';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
-
-const AVATARS = ['🎰', '🍀', '👑', '🎲', '🃏', '💎', '🔥', '⭐', '🚀', '🦊'];
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
@@ -29,30 +29,33 @@ export default function Profile() {
   };
 
   return (
-    <Layout title="Profile" subtitle="Tu perfil de jugador demo">
+    <Layout title="Profile" subtitle="Tu perfil de jugador">
       <div className="glass-card p-6 mb-6 flex flex-col sm:flex-row items-start sm:items-center gap-5">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-electric-600/30 to-electric-400/10 border border-electric-500/20 flex items-center justify-center text-4xl shrink-0">
-          {user?.avatar}
+        <div className="rounded-2xl bg-gradient-to-br from-gold-600/30 to-gold-400/10 border border-gold-500/20 shrink-0 p-0.5">
+          <UserAvatar avatar={user?.avatar} username={user?.username} size={78} className="!rounded-[14px] border-0" />
         </div>
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-white">{user?.username}</h2>
+          <h2 className="text-xl font-bold text-white font-serif">{user?.username}</h2>
           <p className="text-sm text-slate-500">{user?.email}</p>
           <p className="text-xs text-slate-600 flex items-center gap-1.5 mt-1">
             <Calendar size={13} /> Miembro desde {new Date(user?.created_at).toLocaleDateString('es-ES')}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5 max-w-[220px]">
-          {AVATARS.map((a) => (
-            <button
-              key={a}
-              onClick={() => changeAvatar(a)}
-              className={`w-9 h-9 rounded-lg flex items-center justify-center text-lg transition-all ${
-                user?.avatar === a ? 'bg-electric-500/30 border border-electric-400/50' : 'bg-white/5 hover:bg-white/10'
-              }`}
-            >
-              {a}
-            </button>
-          ))}
+          {AVATAR_KEYS.map((a) => {
+            const Icon = AVATAR_ICONS[a];
+            return (
+              <button
+                key={a}
+                onClick={() => changeAvatar(a)}
+                className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+                  user?.avatar === a ? 'bg-gold-500/30 border border-gold-400/50 text-gold-300' : 'bg-white/5 hover:bg-white/10 text-slate-400'
+                }`}
+              >
+                <Icon size={17} strokeWidth={1.75} />
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -64,7 +67,7 @@ export default function Profile() {
       </div>
 
       <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
-        <Ticket size={18} className="text-electric-400" /> Códigos promocionales utilizados
+        <Ticket size={18} className="text-gold-400" /> Códigos promocionales utilizados
       </h3>
       {!data ? (
         <SkeletonRows count={3} />

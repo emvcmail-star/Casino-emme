@@ -6,33 +6,47 @@ export default {
     extend: {
       colors: {
         base: {
-          950: '#050a1a',
-          900: '#0a1128',
-          800: '#0f1a3a',
-          700: '#152449',
+          950: '#08070a',
+          900: '#0f0d11',
+          800: '#17141a',
+          700: '#211d25',
+          600: '#2c2732',
         },
-        electric: {
-          400: '#5eb1ff',
-          500: '#2f7dff',
-          600: '#155ee0',
-          glow: '#3fa9ff',
+        gold: {
+          300: '#f3dc9a',
+          400: '#e9c46a',
+          500: '#d4af37',
+          600: '#a9841f',
+          glow: '#f3d27a',
+        },
+        crimson: {
+          400: '#e35d6a',
+          500: '#b3273a',
+          600: '#7f1a29',
+        },
+        felt: {
+          900: '#0c1a14',
+          800: '#12261d',
         },
       },
       fontFamily: {
-        display: ['"Sora"', 'system-ui', 'sans-serif'],
+        display: ['"Manrope"', 'system-ui', 'sans-serif'],
+        serif: ['"Playfair Display"', '"Georgia"', 'serif'],
       },
       boxShadow: {
-        glow: '0 0 20px rgba(63, 169, 255, 0.35), 0 0 60px rgba(47, 125, 255, 0.15)',
-        'glow-lg': '0 0 40px rgba(63, 169, 255, 0.45), 0 0 100px rgba(47, 125, 255, 0.25)',
-        card: '0 8px 32px rgba(0, 0, 0, 0.35)',
+        glow: '0 0 20px rgba(212, 175, 55, 0.30), 0 0 60px rgba(169, 132, 31, 0.12)',
+        'glow-lg': '0 0 40px rgba(212, 175, 55, 0.40), 0 0 100px rgba(169, 132, 31, 0.22)',
+        card: '0 10px 34px rgba(0, 0, 0, 0.45)',
+        'inner-line': 'inset 0 1px 0 rgba(255,255,255,0.06)',
       },
       backgroundImage: {
-        'radial-glow': 'radial-gradient(circle at 50% 0%, rgba(47,125,255,0.18), transparent 60%)',
+        'radial-glow': 'radial-gradient(circle at 50% 0%, rgba(212,175,55,0.14), transparent 60%)',
+        'felt-radial': 'radial-gradient(circle at 50% 20%, rgba(20,60,40,0.35), transparent 65%)',
       },
       keyframes: {
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(63,169,255,0.35)' },
-          '50%': { boxShadow: '0 0 40px rgba(63,169,255,0.65)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(212,175,55,0.30)' },
+          '50%': { boxShadow: '0 0 40px rgba(212,175,55,0.55)' },
         },
         'slide-up': {
           from: { opacity: 0, transform: 'translateY(12px)' },

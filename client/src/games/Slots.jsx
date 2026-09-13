@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Cherry, Citrus, Bell, Star, Diamond } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
 import GameShell from './GameShell.jsx';
@@ -7,10 +7,34 @@ import { useLastPlays, LastPlaysList } from './useLastPlays.jsx';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
+const SYMBOL_META = {
+  cherry: { icon: Cherry, className: 'text-rose-400' },
+  lemon: { icon: Citrus, className: 'text-yellow-300' },
+  bell: { icon: Bell, className: 'text-gold-300' },
+  star: { icon: Star, className: 'text-amber-300' },
+  diamond: { icon: Diamond, className: 'text-sky-300' },
+  seven: { icon: null, className: 'text-crimson-400' },
+};
+const SYMBOL_KEYS = Object.keys(SYMBOL_META);
+
+function Reel({ symbol, spinning }) {
+  const meta = SYMBOL_META[symbol] || SYMBOL_META.cherry;
+  const Icon = meta.icon;
+  return (
+    <div
+      className={`w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.02] border border-white/10 flex items-center justify-center shadow-inner ${
+        spinning ? 'animate-pulse' : ''
+      } ${meta.className}`}
+    >
+      {Icon ? <Icon size={44} strokeWidth={1.6} fill="currentColor" fillOpacity={0.15} /> : <span className="text-5xl font-extrabold font-serif">7</span>}
+    </div>
+  );
+}
+
 export default function Slots() {
   const { updateCredits } = useAuth();
   const [bet, setBet] = useState(10);
-  const [reels, setReels] = useState(['🍒', '🍋', '🔔']);
+  const [reels, setReels] = useState(['cherry', 'lemon', 'bell']);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
@@ -56,14 +80,7 @@ export default function Slots() {
         <>
           <div className="flex gap-3 mb-6">
             {reels.map((s, i) => (
-              <div
-                key={i}
-                className={`w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-b from-white/10 to-white/[0.02] border border-white/10 flex items-center justify-center text-5xl shadow-inner ${
-                  spinning ? 'animate-pulse' : ''
-                }`}
-              >
-                {s}
-              </div>
+              <Reel key={i} symbol={s} spinning={spinning} />
             ))}
           </div>
           {result && <ResultBanner result={result} />}
@@ -74,9 +91,8 @@ export default function Slots() {
   );
 }
 
-const SYMBOLS = ['🍒', '🍋', '🔔', '⭐', '💎', '7️⃣'];
 function randSym() {
-  return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+  return SYMBOL_KEYS[Math.floor(Math.random() * SYMBOL_KEYS.length)];
 }
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));

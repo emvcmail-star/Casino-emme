@@ -23,7 +23,7 @@ export default function ForgotPassword() {
       if (data.simulatedResetCode) {
         setCode(data.simulatedResetCode);
         setStep(2);
-        toast.info('Código de recuperación simulado generado (demo)');
+        toast.info('Código de recuperación simulado generado');
       } else {
         toast.info(data.message);
       }
@@ -52,13 +52,13 @@ export default function ForgotPassword() {
     <AuthShell>
       <h2 className="text-2xl font-extrabold text-white mb-1">Recuperar contraseña</h2>
       <p className="text-sm text-slate-500 mb-6">
-        Flujo simulado para la demo: no se envía ningún correo real.
+        Flujo simulado: no se envía ningún correo real.
       </p>
 
       {step === 1 && (
         <form onSubmit={requestReset} className="space-y-4">
           <div>
-            <label className="label-field">Email de tu cuenta demo</label>
+            <label className="label-field">Email de tu cuenta</label>
             <input type="email" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <button className="btn-primary w-full" disabled={loading}>
@@ -69,7 +69,7 @@ export default function ForgotPassword() {
 
       {step === 2 && (
         <form onSubmit={resetPassword} className="space-y-4">
-          <div className="glass-card !bg-electric-500/5 border-electric-500/20 p-3 text-xs text-slate-300 font-mono break-all">
+          <div className="glass-card !bg-gold-500/5 border-gold-500/20 p-3 text-xs text-slate-300 font-mono break-all">
             Código simulado: {code}
           </div>
           <div>
@@ -101,7 +101,7 @@ export default function ForgotPassword() {
       {info && step === 1 && <p className="text-xs text-slate-500 mt-4">{info}</p>}
 
       <p className="text-center text-sm text-slate-500 mt-6">
-        <Link to="/login" className="text-electric-400 hover:text-electric-300 font-semibold">
+        <Link to="/login" className="text-gold-400 hover:text-gold-300 font-semibold">
           Volver a iniciar sesión
         </Link>
       </p>

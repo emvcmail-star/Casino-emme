@@ -5,7 +5,7 @@ import { signToken, requireAuth, sanitizeUser } from '../middleware/auth.js';
 
 const router = Router();
 const STARTING_CREDITS = Number(process.env.STARTING_CREDITS || 5000);
-const AVATARS = ['🎰', '🍀', '👑', '🎲', '🃏', '💎', '🔥', '⭐', '🚀', '🦊'];
+const AVATARS = ['crown', 'spade', 'club', 'diamond', 'heart', 'gem', 'flame', 'rocket', 'trophy', 'ghost'];
 
 router.post('/register', (req, res) => {
   const { username, email, password } = req.body || {};
@@ -16,7 +16,7 @@ router.post('/register', (req, res) => {
     return res.status(400).json({ error: 'La contraseña debe tener al menos 4 caracteres' });
   }
   const existing = db.prepare('SELECT id FROM users WHERE username = ? OR email = ?').get(username, email);
-  if (existing) return res.status(409).json({ error: 'Ese usuario o email ya existe en la demo' });
+  if (existing) return res.status(409).json({ error: 'Ese usuario o email ya existe' });
 
   const hash = bcrypt.hashSync(String(password), 10);
   const avatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
@@ -38,7 +38,7 @@ router.post('/login', (req, res) => {
   if (!user || !bcrypt.compareSync(String(password), user.password_hash)) {
     return res.status(401).json({ error: 'Credenciales inválidas' });
   }
-  if (user.status === 'blocked') return res.status(403).json({ error: 'Cuenta bloqueada (demo)' });
+  if (user.status === 'blocked') return res.status(403).json({ error: 'Cuenta bloqueada' });
   const token = signToken(user);
   res.json({ token, user: sanitizeUser(user) });
 });
@@ -55,7 +55,7 @@ router.post('/forgot-password', (req, res) => {
   // Siempre responde OK para no filtrar qué emails existen (comportamiento realista de demo)
   res.json({
     ok: true,
-    message: 'Si el email existe en la demo, se ha generado un enlace de recuperación simulado.',
+    message: 'Si el email existe, se ha generado un enlace de recuperación simulado.',
     simulatedResetCode: user ? `DEMO-RESET-${user.id}-${Date.now().toString(36).toUpperCase()}` : null,
   });
 });
@@ -71,7 +71,7 @@ router.post('/reset-password', (req, res) => {
   }
   const hash = bcrypt.hashSync(String(newPassword), 10);
   db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, user.id);
-  res.json({ ok: true, message: 'Contraseña actualizada (demo)' });
+  res.json({ ok: true, message: 'Contraseña actualizada' });
 });
 
 router.get('/me', requireAuth, (req, res) => {

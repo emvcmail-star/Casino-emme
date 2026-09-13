@@ -35,9 +35,9 @@ export default function Register() {
 
   return (
     <AuthShell>
-      <h2 className="text-2xl font-extrabold text-white mb-1">Crea tu cuenta demo</h2>
+      <h2 className="text-2xl font-extrabold text-white mb-1">Crea tu cuenta</h2>
       <p className="text-sm text-slate-500 mb-6">
-        Datos ficticios, sin verificación real. Es solo una demostración con créditos virtuales.
+        Datos ficticios, sin verificación real. Juega con créditos virtuales sin valor monetario.
       </p>
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -64,21 +64,21 @@ export default function Register() {
         {error && <p className="text-sm text-rose-400 bg-rose-400/10 border border-rose-400/20 rounded-lg px-3 py-2">{error}</p>}
 
         <button className="btn-primary w-full" disabled={loading}>
-          <UserPlus size={18} /> {loading ? 'Creando cuenta…' : 'Crear cuenta demo'}
+          <UserPlus size={18} /> {loading ? 'Creando cuenta…' : 'Crear cuenta'}
         </button>
       </form>
 
       <p className="text-center text-sm text-slate-500 mt-6">
         ¿Ya tienes cuenta?{' '}
-        <Link to="/login" className="text-electric-400 hover:text-electric-300 font-semibold">
+        <Link to="/login" className="text-gold-400 hover:text-gold-300 font-semibold">
           Inicia sesión
         </Link>
       </p>
 
       <Modal open={!!welcome} onClose={() => navigate('/dashboard')} title="¡Cuenta creada!">
         <div className="text-center py-4">
-          <div className="w-16 h-16 mx-auto rounded-full bg-electric-500/20 flex items-center justify-center mb-4 animate-pulse-glow">
-            <PartyPopper className="text-electric-300" size={30} />
+          <div className="w-16 h-16 mx-auto rounded-full bg-gold-500/20 flex items-center justify-center mb-4 animate-pulse-glow">
+            <PartyPopper className="text-gold-300" size={30} />
           </div>
           <p className="text-slate-300 mb-1">Bono de bienvenida acreditado</p>
           <p className="text-4xl font-extrabold text-white mb-1">+{welcome?.toLocaleString('es-ES')}</p>

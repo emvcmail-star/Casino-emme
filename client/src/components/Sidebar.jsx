@@ -2,9 +2,10 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, Gamepad2, Gift, Ticket, History, LogOut, ShieldCheck,
-  Users, Coins, Settings2, ClipboardList, ReceiptText, SlidersHorizontal, X,
+  Users, Coins, Settings2, ClipboardList, ReceiptText, SlidersHorizontal, X, Spade,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import UserAvatar from './UserAvatar.jsx';
 
 const USER_LINKS = [
   { to: '/dashboard', label: 'Home', icon: LayoutDashboard },
@@ -46,12 +47,12 @@ export default function Sidebar({ mode = 'user', open, onClose }) {
       >
         <div className="flex items-center justify-between px-5 py-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-electric-500 to-electric-400 flex items-center justify-center text-lg shadow-glow">
-              🎰
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-gold-500 to-gold-300 flex items-center justify-center shadow-glow text-base-950">
+              <Spade size={18} strokeWidth={2} fill="currentColor" />
             </div>
             <div>
-              <p className="font-bold text-white leading-none">Nova Casino</p>
-              <p className="text-[11px] text-electric-400 font-semibold tracking-wide">DEMO · SIN DINERO REAL</p>
+              <p className="font-bold text-white leading-none font-serif tracking-wide">Casino de Emme</p>
+              <p className="text-[11px] text-gold-400 font-semibold tracking-wide">CRÉDITOS VIRTUALES</p>
             </div>
           </div>
           <button className="lg:hidden text-slate-400" onClick={onClose}>
@@ -75,7 +76,7 @@ export default function Sidebar({ mode = 'user', open, onClose }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-electric-600/30 to-electric-500/10 text-white border border-electric-500/30 shadow-glow'
+                    ? 'bg-gradient-to-r from-gold-600/30 to-gold-500/10 text-white border border-gold-500/30 shadow-glow'
                     : 'text-slate-400 hover:text-slate-100 hover:bg-white/5 border border-transparent'
                 }`
               }
@@ -98,7 +99,7 @@ export default function Sidebar({ mode = 'user', open, onClose }) {
             </NavLink>
           )}
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-lg">{user?.avatar}</div>
+            <UserAvatar avatar={user?.avatar} username={user?.username} size={36} />
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white truncate">{user?.username}</p>
               <p className="text-xs text-slate-500 truncate">{user?.email}</p>

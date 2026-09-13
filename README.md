@@ -1,4 +1,4 @@
-# Nova Casino — DEMO
+# Casino de Emme
 
 Simulador de casino **100% de demostración**. No procesa dinero real, no
 tiene depósitos, retiros, tarjetas ni criptomonedas. Todos los saldos son

@@ -50,7 +50,7 @@ export default function AdminGames() {
                 </Link>
                 <button
                   onClick={() => toggle(g)}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${g.enabled ? 'bg-electric-500' : 'bg-white/10'}`}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${g.enabled ? 'bg-gold-500' : 'bg-white/10'}`}
                 >
                   <span
                     className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${g.enabled ? 'translate-x-5' : 'translate-x-0.5'}`}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Coins, Plus, Minus } from 'lucide-react';
 import Layout from '../../components/Layout.jsx';
+import UserAvatar from '../../components/UserAvatar.jsx';
 import { SkeletonRows } from '../../components/Skeleton.jsx';
 import { api } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -38,7 +39,7 @@ export default function AdminCredits() {
           {users.map((u) => (
             <div key={u.id} className="flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-3">
               <div className="flex items-center gap-2 flex-1 min-w-0">
-                <span className="text-xl">{u.avatar}</span>
+                <UserAvatar avatar={u.avatar} username={u.username} size={28} />
                 <div className="min-w-0">
                   <p className="text-white font-medium truncate">{u.username}</p>
                   <p className="text-xs text-slate-500 flex items-center gap-1">
