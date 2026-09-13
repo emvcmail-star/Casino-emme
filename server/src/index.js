@@ -4,6 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import path from 'node:path';
 import fs from 'node:fs';
+import http from 'node:http';
 import { fileURLToPath } from 'node:url';
 import './db/index.js';
 import './db/seed.js';
@@ -12,6 +13,8 @@ import userRoutes from './routes/users.js';
 import gameRoutes from './routes/games.js';
 import promoRoutes from './routes/promo.js';
 import adminRoutes from './routes/admin.js';
+import chatRoutes from './routes/chat.js';
+import { attachChat } from './realtime/chat.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -28,6 +31,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/promo', promoRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/chat', chatRoutes);
 
 const clientDist = path.join(__dirname, '..', '..', 'client', 'dist');
 if (fs.existsSync(clientDist)) {
@@ -45,7 +49,10 @@ app.use((err, req, res, next) => {
   res.status(err.status || 500).json({ error: err.message || 'Error interno del servidor' });
 });
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+attachChat(server);
+
+server.listen(PORT, () => {
   console.log(`Casino DEMO API escuchando en http://localhost:${PORT}`);
   console.log('Modo demostración: sin dinero real, solo créditos virtuales.');
 });

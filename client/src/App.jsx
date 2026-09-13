@@ -13,6 +13,7 @@ import Bonuses from './pages/Bonuses.jsx';
 import PromoCodes from './pages/PromoCodes.jsx';
 import History from './pages/History.jsx';
 import Leaderboard from './pages/Leaderboard.jsx';
+import Chat from './pages/Chat.jsx';
 
 import AdminDashboard from './pages/admin/AdminDashboard.jsx';
 import AdminUsers from './pages/admin/AdminUsers.jsx';
@@ -40,6 +41,7 @@ export default function App() {
       <Route path="/promo-codes" element={<ProtectedRoute><PromoCodes /></ProtectedRoute>} />
       <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
       <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+      <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
 
       <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
