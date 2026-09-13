@@ -43,6 +43,8 @@ export default function Plinko() {
   };
 
   const table = { low: [8, 3, 1.5, 1.2, 1, 0.5, 1, 1.2, 1.5, 3, 8], medium: [15, 5, 2, 1.3, 0.7, 0.4, 0.7, 1.3, 2, 5, 15], high: [43, 10, 3, 1.3, 0.4, 0.2, 0.4, 1.3, 3, 10, 43] }[risk];
+  const ROWS = 10;
+  const PEG_ZONE_PCT = 84;
 
   return (
     <GameShell
@@ -74,22 +76,41 @@ export default function Plinko() {
       }
       table={
         <>
-          <div className="relative w-full max-w-md h-52 mb-4">
+          <div className="relative w-full max-w-md h-64 mb-4 rounded-xl bg-base-950/60 border border-white/5 overflow-hidden">
+            {Array.from({ length: ROWS }).map((_, r) => (
+              <div
+                key={r}
+                className="absolute left-0 right-0 flex justify-center items-center gap-[5%]"
+                style={{ top: `${((r + 1) / (ROWS + 1)) * PEG_ZONE_PCT}%` }}
+              >
+                {Array.from({ length: r + 2 }).map((_, p) => (
+                  <span key={p} className="w-1.5 h-1.5 rounded-full bg-white/25 shadow-[0_0_4px_rgba(255,255,255,0.15)]" />
+                ))}
+              </div>
+            ))}
             {ballPos && (
               <div
-                className="absolute w-4 h-4 rounded-full bg-amber-300 shadow-glow transition-all duration-100"
+                className="absolute w-3.5 h-3.5 rounded-full bg-gradient-to-br from-amber-200 to-amber-500 shadow-glow transition-all duration-100 z-10"
                 style={{
                   left: `${(ballPos.x / 10) * 100}%`,
-                  top: `${(ballPos.row / 10) * 85}%`,
-                  transform: 'translateX(-50%)',
+                  top: `${(ballPos.row / (ROWS + 1)) * PEG_ZONE_PCT}%`,
+                  transform: 'translate(-50%, -50%)',
                 }}
               />
             )}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-between gap-0.5">
+            <div className="absolute bottom-0 left-0 right-0 flex justify-between gap-0.5 p-1">
               {table.map((m, i) => (
                 <div
                   key={i}
-                  className={`flex-1 text-center text-[10px] font-bold py-1.5 rounded ${m >= 5 ? 'bg-amber-400/20 text-amber-300' : m >= 1 ? 'bg-gold-400/15 text-gold-300' : 'bg-white/5 text-slate-500'}`}
+                  className={`flex-1 text-center text-[10px] font-bold py-1.5 rounded transition-colors ${
+                    result && result.details.bucket === i
+                      ? 'bg-gold-400 text-base-950 scale-105'
+                      : m >= 5
+                      ? 'bg-amber-400/20 text-amber-300'
+                      : m >= 1
+                      ? 'bg-gold-400/15 text-gold-300'
+                      : 'bg-white/5 text-slate-500'
+                  }`}
                 >
                   {m}x
                 </div>

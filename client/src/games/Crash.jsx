@@ -12,6 +12,16 @@ function multiplierAt(elapsedMs) {
   return Math.max(1, Math.pow(Math.E, t / 9));
 }
 
+const GRAPH_W = 400;
+const GRAPH_H = 200;
+const GRAPH_DURATION_MS = 12000;
+
+function pointFor(elapsedMs, multiplier) {
+  const x = Math.min(GRAPH_W, (elapsedMs / GRAPH_DURATION_MS) * GRAPH_W);
+  const y = Math.max(8, GRAPH_H - Math.log(multiplier) * 55);
+  return [x, y];
+}
+
 export default function Crash() {
   const { updateCredits } = useAuth();
   const [bet, setBet] = useState(10);
@@ -23,6 +33,7 @@ export default function Crash() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [plays, pushPlay] = useLastPlays();
+  const [points, setPoints] = useState([[0, GRAPH_H]]);
   const startRef = useRef(0);
   const rafRef = useRef(null);
 
@@ -30,7 +41,9 @@ export default function Crash() {
 
   const tick = () => {
     const elapsed = Date.now() - startRef.current;
-    setLive(multiplierAt(elapsed));
+    const mult = multiplierAt(elapsed);
+    setLive(mult);
+    setPoints((prev) => [...prev, pointFor(elapsed, mult)]);
     rafRef.current = requestAnimationFrame(tick);
   };
 
@@ -45,6 +58,7 @@ export default function Crash() {
       setSession(data.sessionId);
       startRef.current = Date.now();
       setLive(1);
+      setPoints([[0, GRAPH_H]]);
       setFlying(true);
       rafRef.current = requestAnimationFrame(tick);
     } catch (err) {
@@ -63,13 +77,16 @@ export default function Crash() {
       const data = await api.post('/games/crash/cashout', { sessionId: session });
       setSession(null);
       updateCredits(data.newBalance);
+      const elapsed = Date.now() - startRef.current;
       if (data.crashed) {
         setCrashed(true);
         setLive(data.crashPoint);
+        setPoints((prev) => [...prev, pointFor(elapsed, data.crashPoint)]);
         setResult({ outcome: 'loss', multiplier: 0, payout: 0, bet });
         pushPlay({ outcome: 'loss', multiplier: 0 });
       } else {
         setLive(data.multiplier);
+        setPoints((prev) => [...prev, pointFor(elapsed, data.multiplier)]);
         setResult({ outcome: 'win', multiplier: data.multiplier, payout: data.payout, bet });
         pushPlay({ outcome: 'win', multiplier: data.multiplier });
       }
@@ -100,17 +117,55 @@ export default function Crash() {
       }
       table={
         <>
-          <div className="relative w-full h-56 flex items-center justify-center overflow-hidden">
-            <div
-              className={`transition-transform duration-100 ${flying ? '-translate-y-10' : ''} ${
-                crashed ? 'opacity-30 rotate-45 text-crimson-400' : 'text-gold-300'
-              }`}
-            >
-              {crashed ? <Flame size={72} strokeWidth={1.4} /> : <Rocket size={72} strokeWidth={1.4} />}
+          <div className="relative w-full h-56 overflow-hidden rounded-xl bg-base-950/60 border border-white/5">
+            <svg viewBox={`0 0 ${GRAPH_W} ${GRAPH_H}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+              {[0.25, 0.5, 0.75].map((f) => (
+                <line key={f} x1="0" x2={GRAPH_W} y1={GRAPH_H * f} y2={GRAPH_H * f} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
+              ))}
+              {points.length > 1 && (
+                <>
+                  <defs>
+                    <linearGradient id="crashFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={crashed ? '#f43f5e' : '#34d399'} stopOpacity="0.35" />
+                      <stop offset="100%" stopColor={crashed ? '#f43f5e' : '#34d399'} stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <polygon
+                    points={`0,${GRAPH_H} ${points.map(([x, y]) => `${x},${y}`).join(' ')} ${points[points.length - 1][0]},${GRAPH_H}`}
+                    fill="url(#crashFill)"
+                  />
+                  <polyline
+                    points={points.map(([x, y]) => `${x},${y}`).join(' ')}
+                    fill="none"
+                    stroke={crashed ? '#f43f5e' : '#34d399'}
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </>
+              )}
+            </svg>
+            {points.length > 0 && (
+              <div
+                className={`absolute -translate-x-1/2 -translate-y-1/2 transition-none ${
+                  crashed ? 'text-crimson-400 rotate-45' : 'text-gold-300 -rotate-12'
+                }`}
+                style={{
+                  left: `${(points[points.length - 1][0] / GRAPH_W) * 100}%`,
+                  top: `${(points[points.length - 1][1] / GRAPH_H) * 100}%`,
+                }}
+              >
+                {crashed ? <Flame size={40} strokeWidth={1.6} /> : <Rocket size={40} strokeWidth={1.6} />}
+              </div>
+            )}
+            <div className={`absolute top-3 left-1/2 -translate-x-1/2 text-4xl font-extrabold tabular-nums ${crashed ? 'text-rose-400' : flying ? 'text-emerald-400' : 'text-white'}`}>
+              x{live.toFixed(2)}
             </div>
-          </div>
-          <div className={`text-5xl font-extrabold tabular-nums ${crashed ? 'text-rose-400' : flying ? 'text-emerald-400' : 'text-white'}`}>
-            x{live.toFixed(2)}
+            {crashed && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-semibold text-rose-400 bg-rose-400/10 border border-rose-400/20 rounded-full px-3 py-1">
+                ¡Explotó!
+              </div>
+            )}
           </div>
           {result && <div className="mt-4 w-full"><ResultBanner result={result} /></div>}
         </>

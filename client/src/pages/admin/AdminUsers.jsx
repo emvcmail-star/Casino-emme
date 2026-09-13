@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { Search, UserPlus, Ban, CheckCircle, RotateCcw, Coins, History } from 'lucide-react';
+import { Search, UserPlus, Ban, CheckCircle, RotateCcw, Coins, History, Pencil } from 'lucide-react';
 import Layout from '../../components/Layout.jsx';
 import Modal from '../../components/Modal.jsx';
 import UserAvatar from '../../components/UserAvatar.jsx';
 import { SkeletonRows } from '../../components/Skeleton.jsx';
 import { api } from '../../api/client.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function AdminUsers() {
   const toast = useToast();
+  const { user: me } = useAuth();
   const [users, setUsers] = useState(null);
   const [q, setQ] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [creditsModal, setCreditsModal] = useState(null);
   const [historyModal, setHistoryModal] = useState(null);
   const [history, setHistory] = useState(null);
+  const [editModal, setEditModal] = useState(null);
+  const [editForm, setEditForm] = useState({ username: '', role: 'player' });
   const [newUser, setNewUser] = useState({ username: '', email: '', password: '', credits: 5000 });
   const [creditForm, setCreditForm] = useState({ amount: '', mode: 'add' });
 
@@ -78,6 +82,25 @@ export default function AdminUsers() {
     }
   };
 
+  const openEdit = (u) => {
+    setEditModal(u);
+    setEditForm({ username: u.username, role: u.role, password: '' });
+  };
+
+  const submitEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = { username: editForm.username, role: editForm.role };
+      if (editForm.password) payload.password = editForm.password;
+      await api.patch(`/admin/users/${editModal.id}/profile`, payload);
+      toast.success('Usuario actualizado');
+      setEditModal(null);
+      load(q);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   const openHistory = async (u) => {
     setHistoryModal(u);
     const data = await api.get(`/admin/users/${u.id}/history`);
@@ -132,6 +155,9 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1.5">
+                      <button title="Editar" className="btn-secondary !p-2" onClick={() => openEdit(u)}>
+                        <Pencil size={15} />
+                      </button>
                       <button title="Créditos" className="btn-secondary !p-2" onClick={() => setCreditsModal(u)}>
                         <Coins size={15} />
                       </button>
@@ -164,6 +190,56 @@ export default function AdminUsers() {
           <input className="input-field" placeholder="Contraseña" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} required />
           <input className="input-field" placeholder="Créditos iniciales" type="number" value={newUser.credits} onChange={(e) => setNewUser({ ...newUser, credits: Number(e.target.value) })} />
           <button className="btn-primary w-full">Crear</button>
+        </form>
+      </Modal>
+
+      <Modal open={!!editModal} onClose={() => setEditModal(null)} title={`Editar usuario: ${editModal?.username}`}>
+        <form onSubmit={submitEdit} className="space-y-3">
+          <div>
+            <label className="label-field">Nombre de usuario</label>
+            <input
+              className="input-field"
+              value={editForm.username}
+              onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="label-field">Rol</label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { v: 'player', l: 'Jugador' },
+                { v: 'admin', l: 'Admin' },
+              ].map((o) => (
+                <button
+                  type="button"
+                  key={o.v}
+                  disabled={editModal?.id === me?.id && o.v !== 'admin'}
+                  onClick={() => setEditForm((f) => ({ ...f, role: o.v }))}
+                  className={`rounded-lg py-2 text-sm font-semibold border disabled:opacity-40 disabled:cursor-not-allowed ${
+                    editForm.role === o.v ? 'bg-gold-500/20 border-gold-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400'
+                  }`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+            {editModal?.id === me?.id && (
+              <p className="text-xs text-slate-500 mt-1.5">No puedes quitarte el rol admin a ti mismo.</p>
+            )}
+          </div>
+          <div>
+            <label className="label-field">Nueva contraseña (opcional)</label>
+            <input
+              className="input-field"
+              type="password"
+              placeholder="Dejar en blanco para no cambiarla"
+              value={editForm.password}
+              onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+              minLength={6}
+            />
+          </div>
+          <button className="btn-primary w-full">Guardar cambios</button>
         </form>
       </Modal>
 

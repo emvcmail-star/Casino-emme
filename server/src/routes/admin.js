@@ -119,6 +119,43 @@ router.patch('/users/:id/status', (req, res) => {
   res.json({ user: sanitizeUser(updated) });
 });
 
+router.patch('/users/:id/profile', (req, res) => {
+  const { username, role, password } = req.body || {};
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+  if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+  const updates = {};
+  if (username !== undefined) {
+    const trimmed = String(username).trim();
+    if (!trimmed) return res.status(400).json({ error: 'El nombre de usuario no puede estar vacío' });
+    const existing = db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').get(trimmed, user.id);
+    if (existing) return res.status(409).json({ error: 'Ese nombre de usuario ya está en uso' });
+    updates.username = trimmed;
+  }
+  if (password !== undefined && password !== '') {
+    if (String(password).length < 6) return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    updates.password_hash = bcrypt.hashSync(String(password), 10);
+  }
+  if (role !== undefined) {
+    if (!['admin', 'player'].includes(role)) return res.status(400).json({ error: 'Rol inválido' });
+    if (Number(req.params.id) === req.user.id && role !== 'admin') {
+      return res.status(400).json({ error: 'No puedes quitarte el rol admin a ti mismo' });
+    }
+    updates.role = role;
+  }
+  if (Object.keys(updates).length === 0) return res.status(400).json({ error: 'Nada para actualizar' });
+
+  const setClause = Object.keys(updates)
+    .map((k) => `${k} = ?`)
+    .join(', ');
+  db.prepare(`UPDATE users SET ${setClause} WHERE id = ?`).run(...Object.values(updates), user.id);
+  const { password_hash, ...loggedUpdates } = updates;
+  if (password_hash) loggedUpdates.password = 'cambiada';
+  logAdminActivity(req.user.id, req.user.username, 'update_profile', user.username, loggedUpdates);
+  const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(user.id);
+  res.json({ user: sanitizeUser(updated) });
+});
+
 router.get('/users/:id/history', (req, res) => {
   const rows = db
     .prepare('SELECT * FROM game_history WHERE user_id = ? ORDER BY created_at DESC LIMIT 100')

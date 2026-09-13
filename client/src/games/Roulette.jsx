@@ -45,7 +45,7 @@ export default function Roulette() {
       const data = await api.post('/games/roulette/play', { bet, betType: selection.type, betValue: selection.value });
       const landing = data.details.spin;
       const pocketIndex = WHEEL_ORDER.indexOf(landing);
-      const targetAngle = 360 * 5 + (360 - pocketIndex * ANGLE);
+      const targetAngle = 360 * 5 + (360 - pocketIndex * ANGLE - ANGLE / 2);
       setRotation((r) => r + targetAngle);
       await new Promise((res) => setTimeout(res, 2600));
       setResult({ ...data, bet });

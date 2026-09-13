@@ -11,8 +11,8 @@ export default function Login() {
   const { login } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const [username, setUsername] = useState('demo');
-  const [password, setPassword] = useState('Demo123!');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +40,13 @@ export default function Login() {
       <form onSubmit={onSubmit} className="space-y-4">
         <div>
           <label className="label-field">Usuario o email</label>
-          <input className="input-field" value={username} onChange={(e) => setUsername(e.target.value)} required />
+          <input
+            className="input-field"
+            placeholder="ej. demo"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
         </div>
         <div>
           <label className="label-field">Contraseña</label>
@@ -48,6 +54,7 @@ export default function Login() {
             <input
               className="input-field pr-11"
               type={showPw ? 'text' : 'password'}
+              placeholder="ej. Demo123!"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
