@@ -1,5 +1,15 @@
 import confetti from 'canvas-confetti';
 
+export function smallWinConfetti() {
+  confetti({
+    particleCount: 40,
+    spread: 70,
+    origin: { y: 0.6 },
+    colors: ['#d4af37', '#f3dc9a', '#34d399'],
+    scalar: 0.8,
+  });
+}
+
 export function bigWinConfetti() {
   const duration = 2200;
   const end = Date.now() + duration;

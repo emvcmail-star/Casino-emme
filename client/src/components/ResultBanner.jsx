@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Trophy, Frown, Equal } from 'lucide-react';
-import { bigWinConfetti } from './confetti.js';
+import { bigWinConfetti, smallWinConfetti } from './confetti.js';
 import { useSound } from '../context/SoundContext.jsx';
 
 export default function ResultBanner({ result }) {
@@ -9,8 +9,10 @@ export default function ResultBanner({ result }) {
   useEffect(() => {
     if (!result) return;
     if (result.outcome === 'win') {
-      play('win');
-      if (result.payout >= (result.bet || 0) * 5) bigWinConfetti();
+      const isBig = result.payout >= (result.bet || 0) * 3;
+      play(isBig ? 'jackpot' : 'win');
+      if (isBig) bigWinConfetti();
+      else smallWinConfetti();
     } else if (result.outcome === 'loss') {
       play('loss');
     }

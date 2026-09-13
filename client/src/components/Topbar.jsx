@@ -1,11 +1,25 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Menu, Coins, Volume2, VolumeX } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useSound } from '../context/SoundContext.jsx';
+import AnimatedNumber from './AnimatedNumber.jsx';
 
 export default function Topbar({ title, subtitle, onMenu }) {
   const { user } = useAuth();
   const { muted, setMuted } = useSound();
+  const [pulse, setPulse] = useState(false);
+  const prevCredits = useRef(user?.credits);
+
+  useEffect(() => {
+    const prev = prevCredits.current;
+    prevCredits.current = user?.credits;
+    if (prev !== undefined && user?.credits > prev) {
+      setPulse(true);
+      const t = setTimeout(() => setPulse(false), 500);
+      return () => clearTimeout(t);
+    }
+  }, [user?.credits]);
+
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between gap-4 px-4 sm:px-6 py-4 bg-base-950/70 backdrop-blur-xl border-b border-white/5">
       <div className="flex items-center gap-3 min-w-0">
@@ -25,10 +39,17 @@ export default function Topbar({ title, subtitle, onMenu }) {
         >
           {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
         </button>
-        <div className="glass-card flex items-center gap-2 px-4 py-2 border-amber-400/20">
-          <Coins size={18} className="text-amber-300" />
-          <span className="font-bold text-white tabular-nums">
-            {Number(user?.credits ?? 0).toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+        <div
+          className={`glass-card flex items-center gap-2 px-4 py-2 border-amber-400/20 transition-all duration-300 ${
+            pulse ? 'scale-110 !border-emerald-400/60 shadow-glow-lg' : ''
+          }`}
+        >
+          <Coins size={18} className={pulse ? 'text-emerald-300' : 'text-amber-300'} />
+          <span className={`font-bold tabular-nums ${pulse ? 'text-emerald-300' : 'text-white'}`}>
+            <AnimatedNumber
+              value={Number(user?.credits ?? 0)}
+              format={(v) => v.toLocaleString('es-ES', { maximumFractionDigits: 2 })}
+            />
           </span>
           <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">créditos</span>
         </div>

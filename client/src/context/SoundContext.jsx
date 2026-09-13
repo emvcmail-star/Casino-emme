@@ -9,6 +9,13 @@ const PRESETS = {
     { freq: 659, dur: 0.09 },
     { freq: 784, dur: 0.16 },
   ],
+  jackpot: [
+    { freq: 523, dur: 0.08 },
+    { freq: 659, dur: 0.08 },
+    { freq: 784, dur: 0.08 },
+    { freq: 1047, dur: 0.08 },
+    { freq: 1319, dur: 0.24 },
+  ],
   loss: [{ freq: 180, dur: 0.28, type: 'sawtooth' }],
   click: [{ freq: 320, dur: 0.05 }],
   crash: [{ freq: 120, dur: 0.4, type: 'square' }],
