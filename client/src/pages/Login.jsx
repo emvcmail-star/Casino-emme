@@ -81,11 +81,6 @@ export default function Login() {
           Regístrate gratis
         </Link>
       </p>
-
-      <div className="mt-6 glass-card !bg-white/[0.03] p-3 text-xs text-slate-500">
-        Acceso rápido: <span className="text-slate-300 font-mono">demo / Demo123!</span> ·{' '}
-        <span className="text-slate-300 font-mono">admin / Admin123!</span>
-      </div>
     </AuthShell>
   );
 }
