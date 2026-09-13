@@ -164,6 +164,52 @@ router.post('/:key/play', requireAuth, async (req, res) => {
   }
 });
 
+// Plinko en lote: soltar varias bolas de una vez. Se calcula todo en un solo
+// movimiento de créditos (una lectura + una escritura) para no perder
+// actualizaciones si el cliente disparara N apuestas en paralelo.
+router.post('/plinko/play-batch', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('plinko', res);
+  if (!config) return;
+  const bet = validateBet(config, req.body?.bet, res);
+  if (bet === null) return;
+  const count = Math.min(Math.max(Number(req.body?.count) || 1, 1), 50);
+
+  try {
+    const totalBet = Math.round(bet * count * 100) / 100;
+    const credits = await currentCredits(req.user.id);
+    if (credits < totalBet) throw { status: 400, message: 'Créditos virtuales insuficientes' };
+
+    const results = [];
+    let totalPayout = 0;
+    for (let i = 0; i < count; i++) {
+      const result = playPlinko(config.params, bet, req.body || {});
+      const payout = Math.round(bet * result.multiplier * 100) / 100;
+      totalPayout += payout;
+      results.push({ ...result, bet, payout });
+    }
+    totalPayout = Math.round(totalPayout * 100) / 100;
+
+    const newBalance = Math.round((credits - totalBet + totalPayout) * 100) / 100;
+    await db.prepare('UPDATE users SET credits = ? WHERE id = ?').run(newBalance, req.user.id);
+    await recordTransaction(req.user.id, 'bet', -totalBet, newBalance, `Apuesta en plinko (x${count} bolas)`);
+    if (totalPayout > 0) {
+      await recordTransaction(req.user.id, 'win', totalPayout, newBalance, `Pago de plinko (x${count} bolas)`);
+    }
+    for (const r of results) {
+      await db
+        .prepare(
+          `INSERT INTO game_history (user_id, game_key, bet_amount, payout, multiplier, outcome, details)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        )
+        .run(req.user.id, 'plinko', bet, r.payout, r.multiplier, r.outcome, JSON.stringify(r.details || {}));
+    }
+
+    res.json({ results, totalBet, totalPayout, newBalance });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message || 'Error al procesar la jugada' });
+  }
+});
+
 // ============== BLACKJACK ==============
 router.post('/blackjack/deal', requireAuth, async (req, res) => {
   const config = await requireEnabledConfig('blackjack', res);
