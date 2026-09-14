@@ -94,6 +94,7 @@ export default function Towers() {
   return (
     <GameShell
       error={error}
+      idle={!inRound && !result}
       controls={
         <>
           <BetControls bet={bet} setBet={setBet} min={1} max={500} disabled={inRound || loading} />

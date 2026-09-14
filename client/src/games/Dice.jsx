@@ -40,6 +40,7 @@ export default function Dice() {
   return (
     <GameShell
       error={error}
+      idle={!result}
       controls={
         <>
           <BetControls bet={bet} setBet={setBet} min={1} max={1000} disabled={rolling} />
@@ -92,6 +93,20 @@ export default function Dice() {
               style={{ width: `${chance}%` }}
             />
             <div className="absolute inset-y-0 w-0.5 bg-white" style={{ left: `${target}%` }} />
+          </div>
+          <div className="grid grid-cols-3 gap-2.5 w-full max-w-sm mb-6">
+            <div className="glass-card !bg-white/[0.03] px-3 py-2.5 text-center">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide">Multiplicador</p>
+              <p className="text-base font-extrabold text-gold-300 tabular-nums">x{payout.toFixed(2)}</p>
+            </div>
+            <div className="glass-card !bg-white/[0.03] px-3 py-2.5 text-center">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide">{direction === 'under' ? 'Menor a' : 'Mayor a'}</p>
+              <p className="text-base font-extrabold text-white tabular-nums">{target}</p>
+            </div>
+            <div className="glass-card !bg-white/[0.03] px-3 py-2.5 text-center">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide">Probabilidad</p>
+              <p className="text-base font-extrabold text-emerald-400 tabular-nums">{chance}%</p>
+            </div>
           </div>
           {result && <ResultBanner result={result} />}
         </>

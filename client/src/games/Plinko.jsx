@@ -100,6 +100,7 @@ export default function Plinko() {
   return (
     <GameShell
       error={error}
+      idle={!dropping && !result && !batchResult}
       controls={
         <>
           <BetControls bet={bet} setBet={setBet} min={1} max={500} disabled={dropping} />
@@ -149,7 +150,13 @@ export default function Plinko() {
       }
       table={
         <>
-          <div className="relative w-full max-w-md h-64 mb-4 rounded-xl bg-base-950/60 border border-white/5 overflow-hidden">
+          <div
+            className="relative w-full max-w-md h-64 mb-4 rounded-xl border border-white/5 overflow-hidden"
+            style={{
+              background:
+                'radial-gradient(circle at 50% -10%, rgba(139,92,246,0.30), transparent 55%), radial-gradient(circle at 50% 110%, rgba(99,102,241,0.20), transparent 50%), #0d0a1a',
+            }}
+          >
             {Array.from({ length: ROWS }).map((_, r) => (
               <div
                 key={r}
@@ -157,14 +164,14 @@ export default function Plinko() {
                 style={{ top: `${((r + 1) / (ROWS + 1)) * PEG_ZONE_PCT}%` }}
               >
                 {Array.from({ length: r + 2 }).map((_, p) => (
-                  <span key={p} className="w-1.5 h-1.5 rounded-full bg-white/25 shadow-[0_0_4px_rgba(255,255,255,0.15)]" />
+                  <span key={p} className="w-1.5 h-1.5 rounded-full bg-violet-200/30 shadow-[0_0_4px_rgba(196,181,253,0.25)]" />
                 ))}
               </div>
             ))}
             {balls.map((b) => (
               <div
                 key={b.key}
-                className="absolute w-3.5 h-3.5 rounded-full bg-gradient-to-br from-amber-200 to-amber-500 shadow-glow transition-all duration-100 z-10"
+                className="absolute w-3.5 h-3.5 rounded-full bg-gradient-to-br from-fuchsia-300 to-pink-600 shadow-[0_0_12px_rgba(232,121,249,0.7)] transition-all duration-100 z-10"
                 style={{
                   left: `${(b.x / 10) * 100}%`,
                   top: `${(b.row / (ROWS + 1)) * PEG_ZONE_PCT}%`,
@@ -181,14 +188,14 @@ export default function Plinko() {
                     key={i}
                     className={`relative flex-1 text-center text-[10px] font-bold py-1.5 rounded transition-colors ${
                       isHot
-                        ? 'bg-gold-400 text-base-950 scale-105'
+                        ? 'bg-fuchsia-400 text-base-950 scale-105'
                         : hits > 0
-                        ? 'bg-gold-400/40 text-white'
+                        ? 'bg-fuchsia-400/40 text-white'
                         : m >= 5
-                        ? 'bg-amber-400/20 text-amber-300'
+                        ? 'bg-rose-400/20 text-rose-300'
                         : m >= 1
-                        ? 'bg-gold-400/15 text-gold-300'
-                        : 'bg-white/5 text-slate-500'
+                        ? 'bg-violet-400/15 text-violet-300'
+                        : 'bg-indigo-400/10 text-indigo-300'
                     }`}
                   >
                     {m}x

@@ -67,12 +67,22 @@ export default {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
         },
+        bob: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-6px)' },
+        },
+        drift: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-200px)' },
+        },
       },
       animation: {
         'pulse-glow': 'pulse-glow 2.2s ease-in-out infinite',
         'slide-up': 'slide-up 0.35s ease-out',
         shimmer: 'shimmer 1.6s infinite linear',
         'spin-slow': 'spin-slow 3s linear infinite',
+        bob: 'bob 1.8s ease-in-out infinite',
+        drift: 'drift 30s linear infinite',
       },
     },
   },

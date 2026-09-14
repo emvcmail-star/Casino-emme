@@ -680,6 +680,57 @@ router.post('/crash/status', requireAuth, async (req, res) => {
   res.json({ multiplier: currentMultiplier, crashed });
 });
 
+// ============== VUELO (mismo motor que crash, identidad visual propia) ==============
+router.post('/vuelo/start', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('vuelo', res);
+  if (!config) return;
+  const bet = validateBet(config, req.body?.bet, res);
+  if (bet === null) return;
+  try {
+    const newBalance = await debit(req.user.id, bet, 'vuelo');
+    const { crashPoint, startedAt } = crashStart(config.params.houseEdge ?? 0.04);
+    const sessionId = createSession(req.user.id, 'vuelo', { bet, crashPoint, startedAt, finished: false });
+    res.json({ sessionId, newBalance });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message || 'Error' });
+  }
+});
+
+router.post('/vuelo/cashout', requireAuth, async (req, res) => {
+  const session = getSession(req.body?.sessionId, req.user.id, 'vuelo');
+  if (!session) return res.status(404).json({ error: 'Sesión de vuelo no encontrada o expirada' });
+  const state = session.state;
+  if (state.finished) return res.status(400).json({ error: 'Esta partida ya terminó' });
+  const elapsed = Date.now() - state.startedAt;
+  const currentMultiplier = crashMultiplierAtElapsed(elapsed);
+
+  state.finished = true;
+  if (currentMultiplier >= state.crashPoint) {
+    const { payout, newBalance } = await settle(req.user.id, 'vuelo', state.bet, 0, 'loss', {
+      crashPoint: state.crashPoint,
+      attemptedAt: state.crashPoint,
+    });
+    endSession(session.id);
+    return res.json({ finished: true, crashed: true, crashPoint: state.crashPoint, payout, newBalance });
+  }
+
+  const { payout, newBalance } = await settle(req.user.id, 'vuelo', state.bet, currentMultiplier, 'win', {
+    crashPoint: state.crashPoint,
+    cashedOutAt: currentMultiplier,
+  });
+  endSession(session.id);
+  res.json({ finished: true, crashed: false, multiplier: currentMultiplier, crashPoint: state.crashPoint, payout, newBalance });
+});
+
+router.post('/vuelo/status', requireAuth, async (req, res) => {
+  const session = getSession(req.body?.sessionId, req.user.id, 'vuelo');
+  if (!session) return res.status(404).json({ error: 'Sesión no encontrada' });
+  const elapsed = Date.now() - session.state.startedAt;
+  const currentMultiplier = crashMultiplierAtElapsed(elapsed);
+  const crashed = currentMultiplier >= session.state.crashPoint;
+  res.json({ multiplier: currentMultiplier, crashed });
+});
+
 // ============== VIDEO POKER ==============
 router.post('/videopoker/deal', requireAuth, async (req, res) => {
   const config = await requireEnabledConfig('videopoker', res);

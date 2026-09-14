@@ -12,6 +12,7 @@ const GAMES = [
   { key: 'mines', name: 'Mines', rtp: 96, min: 1, max: 500, params: { gridSize: 25, houseEdge: 0.04 } },
   { key: 'plinko', name: 'Plinko', rtp: 96, min: 1, max: 500, params: { rows: 12, riskLevels: ['low', 'medium', 'high'] } },
   { key: 'crash', name: 'Crash', rtp: 96, min: 1, max: 500, params: { houseEdge: 0.04 } },
+  { key: 'vuelo', name: 'Vuelo', rtp: 96, min: 1, max: 500, params: { houseEdge: 0.04 } },
   { key: 'wheel', name: 'Wheel', rtp: 96, min: 1, max: 500, params: { segments: [1.2, 1.5, 2, 3, 5, 0, 1.2, 1.5, 2, 3, 10, 0] } },
   { key: 'coinflip', name: 'Coin Flip', rtp: 96, min: 1, max: 1000, params: { houseEdge: 0.04, payout: 1.96 } },
   { key: 'keno', name: 'Keno', rtp: 95, min: 1, max: 500, params: { totalNumbers: 40, drawCount: 10, maxPicks: 10 } },

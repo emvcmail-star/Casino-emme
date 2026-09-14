@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Coins, Crown, Zap } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
@@ -15,6 +15,15 @@ export default function CoinFlip() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [plays, pushPlay] = useLastPlays();
+
+  const winStreak = useMemo(() => {
+    let n = 0;
+    for (const p of plays) {
+      if (p.outcome !== 'win') break;
+      n += 1;
+    }
+    return n;
+  }, [plays]);
 
   const flip = async () => {
     setError('');
@@ -36,6 +45,7 @@ export default function CoinFlip() {
   return (
     <GameShell
       error={error}
+      idle={!result}
       controls={
         <>
           <BetControls bet={bet} setBet={setBet} min={1} max={1000} disabled={flipping} />
@@ -67,18 +77,30 @@ export default function CoinFlip() {
       }
       table={
         <>
-          <div
-            className={`w-32 h-32 rounded-full bg-gradient-to-br from-gold-300 to-gold-600 flex items-center justify-center shadow-glow mb-6 text-base-950 ${
-              flipping ? 'animate-spin-slow' : ''
-            }`}
-          >
-            {result ? (
-              result.details.result === 'heads' ? <Crown size={48} strokeWidth={1.75} /> : <Zap size={48} strokeWidth={1.75} />
-            ) : (
-              <Coins size={48} strokeWidth={1.75} />
-            )}
+          <div className="flex items-center gap-5 sm:gap-8">
+            <div className="glass-card !bg-white/[0.03] px-4 py-2.5 text-center w-20 shrink-0">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide">Serie</p>
+              <p className="text-lg font-extrabold text-emerald-400 tabular-nums">{winStreak}</p>
+            </div>
+
+            <div
+              className={`w-32 h-32 rounded-full bg-gradient-to-br from-gold-300 to-gold-600 flex items-center justify-center shadow-glow text-base-950 ${
+                flipping ? 'animate-spin-slow' : ''
+              }`}
+            >
+              {result ? (
+                result.details.result === 'heads' ? <Crown size={48} strokeWidth={1.75} /> : <Zap size={48} strokeWidth={1.75} />
+              ) : (
+                <Coins size={48} strokeWidth={1.75} />
+              )}
+            </div>
+
+            <div className="glass-card !bg-white/[0.03] px-4 py-2.5 text-center w-20 shrink-0">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wide">Coef.</p>
+              <p className="text-lg font-extrabold text-gold-300 tabular-nums">x{result ? Number(result.multiplier).toFixed(2) : '0.00'}</p>
+            </div>
           </div>
-          {result && <ResultBanner result={result} />}
+          {result && <div className="mt-6"><ResultBanner result={result} /></div>}
         </>
       }
       history={<LastPlaysList plays={plays} render={(p) => `${p.label === 'heads' ? 'Cara' : 'Cruz'}`} />}

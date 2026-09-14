@@ -20,6 +20,7 @@ import Limbo from '../games/Limbo.jsx';
 import Towers from '../games/Towers.jsx';
 import VideoPoker from '../games/VideoPoker.jsx';
 import HorseRace from '../games/HorseRace.jsx';
+import Vuelo from '../games/Vuelo.jsx';
 
 const REGISTRY = {
   slots: Slots,
@@ -38,6 +39,7 @@ const REGISTRY = {
   towers: Towers,
   videopoker: VideoPoker,
   horserace: HorseRace,
+  vuelo: Vuelo,
 };
 
 export default function GamePage() {

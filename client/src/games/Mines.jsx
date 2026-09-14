@@ -91,6 +91,7 @@ export default function Mines() {
   return (
     <GameShell
       error={error}
+      idle={!inRound && !result}
       controls={
         <>
           <BetControls bet={bet} setBet={setBet} min={1} max={500} disabled={inRound || loading} />
@@ -125,7 +126,17 @@ export default function Mines() {
       }
       table={
         <>
-          <div className="grid grid-cols-5 gap-2.5 w-full max-w-sm">
+          <div className="w-full max-w-sm flex justify-end gap-2 mb-3">
+            <div className="glass-card !bg-white/[0.03] px-3 py-1.5 flex items-center gap-1.5">
+              <Gem size={13} className="text-emerald-400" />
+              <span className="text-xs font-bold text-white tabular-nums">{revealed.filter((i) => !mines.includes(i)).length}</span>
+            </div>
+            <div className="glass-card !bg-white/[0.03] px-3 py-1.5 flex items-center gap-1.5">
+              <Bomb size={13} className="text-crimson-400" />
+              <span className="text-xs font-bold text-white tabular-nums">{minesCount}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-5 gap-3 w-full max-w-sm p-1">
             {Array.from({ length: GRID_SIZE }).map((_, i) => {
               const isRevealed = revealed.includes(i);
               const isMine = mines.includes(i);
@@ -135,7 +146,7 @@ export default function Mines() {
                   key={i}
                   onClick={() => reveal(i)}
                   disabled={!inRound || isRevealed || loading}
-                  className={`aspect-square rounded-2xl border flex items-center justify-center transition-all duration-200 shadow-inner-line
+                  className={`aspect-square rounded-3xl border flex items-center justify-center transition-all duration-200 shadow-inner-line
                     ${
                       showMine
                         ? isRevealed

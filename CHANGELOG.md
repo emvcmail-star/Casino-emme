@@ -2,6 +2,24 @@
 
 Registro de todos los cambios hechos sobre el Casino DEMO, del más reciente al más antiguo.
 
+## 2026-09-14
+
+### Juego nuevo
+- **Vuelo**: juego tipo "avión que sube y baja" (mismo motor que Crash, sesión y configuración propias). Cielo con degradado de atardecer, nubes flotando, y el avión se bambolea mientras asciende sobre una estela dorada punteada. Diseño e íconos 100% originales, sin copiar nombre, logo ni personaje de ningún juego de terceros.
+
+### Rediseño visual de juegos (sin tocar lógica ni llamadas a la API)
+- **GameTopBar**: nuevo encabezado en cada juego con "‹ Ver todo", ícono + nombre centrado en mayúsculas, y "Guía" + botón de sonido a la derecha.
+- **BetControls**: panel de apuesta simplificado a una sola fila (monto con ícono de moneda, límites con candado, botones ½ y 2X).
+- **GameShell**: monedas decorativas muy tenues en las esquinas, marca de agua "CASINO DE EMME" al pie, y mensaje idle ("Los resultados del juego aparecerán aquí") antes de la primera ronda.
+- **CoinFlip**: cajas de "Serie" (racha de victorias) y "Coeficiente" a los lados de la moneda.
+- **Dice**: fila de 3 cajas (Multiplicador, objetivo, Probabilidad) bajo la barra deslizante.
+- **Mines**: contadores de Gemas/Minas sobre la grilla, celdas con más padding y esquinas más redondeadas.
+- **Crash**: fila de chips con los últimos multiplicadores jugados, fondo degradado espacial morado/rosa.
+- **Plinko**: fondo morado oscuro, bola rosa/magenta brillante, casilleros en tonos rosa/violeta/índigo.
+- **Limbo**: diana con anillos concéntricos y dardo animado en CSS puro (sin emoji ni imágenes) que se clava cerca del centro al ganar o en un anillo exterior (siempre dentro del tablero) al perder, con rebote tipo "overshoot" al aterrizar.
+- **Slots**: gabinete tipo máquina real con marco metálico dorado, símbolos con estilo de carta (esquinas con pip), y barra de control inferior con balance, apuesta y botón de girar circular.
+- **Towers**: solo recibió el idle + las marcas de agua del GameShell (la grilla ya funcionaba bien).
+
 ## 2026-09-13
 
 ### Visual

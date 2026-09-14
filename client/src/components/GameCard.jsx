@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import {
   Play, Ban, Sparkles, Disc, Spade, Layers, Dice5, Bomb, CircleDot,
-  Rocket, Disc3, Coins, Grid3x3, ArrowUpDown, TrendingUp, Building2, Club, Flag,
+  Rocket, Disc3, Coins, Grid3x3, ArrowUpDown, TrendingUp, Building2, Club, Flag, Plane,
 } from 'lucide-react';
 
 export default function GameCard({ game }) {
@@ -68,4 +68,5 @@ export const GAME_META = {
   towers: { name: 'Towers', icon: Building2 },
   videopoker: { name: 'Video Poker', icon: Club },
   horserace: { name: 'Horse Race', icon: Flag },
+  vuelo: { name: 'Vuelo', icon: Plane },
 };
