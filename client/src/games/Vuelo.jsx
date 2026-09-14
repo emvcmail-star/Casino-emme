@@ -14,21 +14,30 @@ function multiplierAt(elapsedMs) {
   return Math.max(1, Math.pow(Math.E, t / 9));
 }
 
-const GRAPH_W = 400;
-const GRAPH_H = 200;
-const GRAPH_DURATION_MS = 12000;
+// Movimiento tipo "bounce runner": el avión pega saltos parabólicos
+// continuos en vez de subir por una curva suave.
+const BOUNCE_MS = 620; // duración de un salto completo
+const HOPS_PER_LAP = 3; // saltos antes de reiniciar el recorrido horizontal
+const LAP_MS = BOUNCE_MS * HOPS_PER_LAP;
+const GROUND_PCT = 80;
+const HOP_HEIGHT_PCT = 52;
+const X_START = 10;
+const X_END = 90;
 
-function pointFor(elapsedMs, multiplier) {
-  const x = Math.min(GRAPH_W, (elapsedMs / GRAPH_DURATION_MS) * GRAPH_W);
-  const y = Math.max(10, GRAPH_H - Math.log(multiplier) * 55);
-  return [x, y];
+function bounceAt(elapsedMs) {
+  const lapT = elapsedMs % LAP_MS;
+  const xPct = X_START + (lapT / LAP_MS) * (X_END - X_START);
+  const hopT = (elapsedMs % BOUNCE_MS) / BOUNCE_MS;
+  const arc = 4 * hopT * (1 - hopT); // 0 -> 1 -> 0, parábola de salto
+  const yPct = GROUND_PCT - arc * HOP_HEIGHT_PCT;
+  const rot = (0.5 - hopT) * 46;
+  return { xPct, yPct, rot };
 }
 
 const CLOUDS = [
-  { top: '12%', w: 60, h: 22, dur: '26s', delay: '0s', op: 0.5 },
-  { top: '28%', w: 44, h: 16, dur: '34s', delay: '-8s', op: 0.35 },
-  { top: '52%', w: 72, h: 26, dur: '40s', delay: '-20s', op: 0.4 },
-  { top: '68%', w: 36, h: 14, dur: '22s', delay: '-4s', op: 0.3 },
+  { top: '10%', w: 60, h: 22, dur: '26s', delay: '0s', op: 0.5 },
+  { top: '22%', w: 44, h: 16, dur: '34s', delay: '-8s', op: 0.35 },
+  { top: '40%', w: 36, h: 14, dur: '22s', delay: '-4s', op: 0.3 },
 ];
 
 export default function Vuelo() {
@@ -42,7 +51,7 @@ export default function Vuelo() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [plays, pushPlay] = useLastPlays();
-  const [points, setPoints] = useState([[0, GRAPH_H]]);
+  const [pos, setPos] = useState({ xPct: X_START, yPct: GROUND_PCT, rot: 0 });
   const startRef = useRef(0);
   const rafRef = useRef(null);
   const pollRef = useRef(null);
@@ -59,9 +68,8 @@ export default function Vuelo() {
 
   const tick = () => {
     const elapsed = Date.now() - startRef.current;
-    const mult = multiplierAt(elapsed);
-    setLive(mult);
-    setPoints((prev) => [...prev, pointFor(elapsed, mult)]);
+    setLive(multiplierAt(elapsed));
+    setPos(bounceAt(elapsed));
     rafRef.current = requestAnimationFrame(tick);
   };
 
@@ -78,16 +86,13 @@ export default function Vuelo() {
     try {
       const data = await api.post('/games/vuelo/cashout', { sessionId: sid });
       updateCredits(data.newBalance);
-      const elapsed = Date.now() - startRef.current;
       if (data.crashed) {
         setCrashed(true);
         setLive(data.crashPoint);
-        setPoints((prev) => [...prev, pointFor(elapsed, data.crashPoint)]);
         setResult({ outcome: 'loss', multiplier: 0, payout: 0, bet });
         pushPlay({ outcome: 'loss', multiplier: 0 });
       } else {
         setLive(data.multiplier);
-        setPoints((prev) => [...prev, pointFor(elapsed, data.multiplier)]);
         setResult({ outcome: 'win', multiplier: data.multiplier, payout: data.payout, bet });
         pushPlay({ outcome: 'win', multiplier: data.multiplier });
       }
@@ -111,7 +116,7 @@ export default function Vuelo() {
       sessionRef.current = data.sessionId;
       startRef.current = Date.now();
       setLive(1);
-      setPoints([[0, GRAPH_H]]);
+      setPos({ xPct: X_START, yPct: GROUND_PCT, rot: 0 });
       setFlying(true);
       rafRef.current = requestAnimationFrame(tick);
       pollRef.current = setInterval(async () => {
@@ -131,8 +136,6 @@ export default function Vuelo() {
   };
 
   const cashout = () => settle(false);
-  const planeLeft = points.length ? (points[points.length - 1][0] / GRAPH_W) * 100 : 0;
-  const planeTop = points.length ? (points[points.length - 1][1] / GRAPH_H) * 100 : 100;
 
   return (
     <GameShell
@@ -151,7 +154,7 @@ export default function Vuelo() {
               <Wallet size={18} /> Retirar en x{live.toFixed(2)}
             </button>
           )}
-          <p className="text-xs text-slate-500">El avión sube y baja con turbulencia. Retira antes de que se estrelle.</p>
+          <p className="text-xs text-slate-500">El avión va saltando sin parar. Retira antes de que se estrelle.</p>
         </>
       }
       table={
@@ -166,30 +169,21 @@ export default function Vuelo() {
                 />
               ))}
             </div>
-            <svg viewBox={`0 0 ${GRAPH_W} ${GRAPH_H}`} className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-              {points.length > 1 && (
-                <polyline
-                  points={points.map(([x, y]) => `${x},${y}`).join(' ')}
-                  fill="none"
-                  stroke={crashed ? '#f43f5e' : 'rgb(var(--gold-400))'}
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeDasharray="1 7"
-                  opacity="0.8"
-                />
-              )}
-            </svg>
-            {points.length > 0 && (
-              <div
-                className="absolute -translate-x-1/2 -translate-y-1/2 transition-none"
-                style={{ left: `${planeLeft}%`, top: `${planeTop}%` }}
-              >
-                <div className={crashed ? 'text-crimson-400 rotate-[70deg]' : `text-crimson-500 -rotate-12 ${flying ? 'animate-bob' : ''}`}>
-                  <PlaneIcon size={42} />
-                </div>
+
+            <div
+              className="absolute left-0 right-0"
+              style={{ top: `${GROUND_PCT + 4}%`, height: '2px', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)' }}
+            />
+
+            <div
+              className={`absolute -translate-x-1/2 -translate-y-1/2 ${flying ? '' : 'transition-all duration-500'}`}
+              style={{ left: `${pos.xPct}%`, top: `${pos.yPct}%`, transform: `translate(-50%, -50%) rotate(${crashed ? 70 : pos.rot}deg)` }}
+            >
+              <div className={crashed ? 'text-crimson-400' : 'text-crimson-500'}>
+                <PlaneIcon size={40} />
               </div>
-            )}
+            </div>
+
             <div className={`absolute top-3 left-1/2 -translate-x-1/2 text-4xl font-extrabold tabular-nums drop-shadow ${crashed ? 'text-rose-300' : flying ? 'text-white' : 'text-white/90'}`}>
               x{live.toFixed(2)}
             </div>
