@@ -198,7 +198,7 @@ export function playWheel(params, bet, input, userStats) {
 }
 
 // ---------- KENO ----------
-function rawPlayKeno(params, bet, input) {
+export function playKeno(params, bet, input) {
   const { picks } = input;
   const { totalNumbers, drawCount } = params;
   if (!Array.isArray(picks) || picks.length === 0 || picks.length > params.maxPicks) {
@@ -234,9 +234,6 @@ function rawPlayKeno(params, bet, input) {
     details: { picks, drawn, matches },
   };
 }
-export function playKeno(params, bet, input, userStats) {
-  return withDynamicRigging(rawPlayKeno, params, bet, input, userStats);
-}
 
 // ---------- LIMBO ----------
 function rawPlayLimbo(params, bet, input) {
@@ -255,8 +252,8 @@ export function playLimbo(params, bet, input, userStats) {
   return withDynamicRigging(rawPlayLimbo, params, bet, input, userStats);
 }
 
-// ---------- HORSE RACE ----------
-function rawPlayHorseRace(params, bet, input) {
+// ---------- HORSE RACE ---------
+export function playHorseRace(params, bet, input) {
   const horses = params.horses;
   const pick = Number(input.horseIndex);
   if (!Number.isInteger(pick) || pick < 0 || pick >= horses.length) {
@@ -275,9 +272,6 @@ function rawPlayHorseRace(params, bet, input) {
     outcome: won ? 'win' : 'loss',
     details: { pick, winnerIndex, finishOrder },
   };
-}
-export function playHorseRace(params, bet, input, userStats) {
-  return withDynamicRigging(rawPlayHorseRace, params, bet, input, userStats);
 }
 
 // ---------- PLINKO ----------
