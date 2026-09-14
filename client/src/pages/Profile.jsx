@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Gamepad2, Trophy, TrendingDown, Coins, Calendar, Ticket, Palette, Check } from 'lucide-react';
+import { Gamepad2, Trophy, TrendingDown, Coins, Calendar, Ticket, Palette, Check, Music, VolumeX } from 'lucide-react';
 import Layout from '../components/Layout.jsx';
 import StatCard from '../components/StatCard.jsx';
 import UserAvatar from '../components/UserAvatar.jsx';
@@ -9,11 +9,13 @@ import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { useSound } from '../context/SoundContext.jsx';
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
   const toast = useToast();
   const { accent, setAccent, accents } = useTheme();
+  const { musicTrack, setMusicTrack, musicVolume, setMusicVolume, tracks } = useSound();
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -95,6 +97,44 @@ export default function Profile() {
             </button>
           ))}
         </div>
+      </div>
+
+      <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+        <Music size={18} className="text-gold-400" /> Música de fondo
+      </h3>
+      <div className="glass-card p-4 mb-8">
+        <p className="text-sm text-slate-500 mb-3">Elige el ambiente musical de la plataforma. Se guarda en este dispositivo.</p>
+        <div className="flex flex-wrap gap-2 mb-4">
+          {Object.entries(tracks).map(([key, t]) => (
+            <button
+              key={key}
+              onClick={() => setMusicTrack(key)}
+              className={`flex items-center gap-1.5 rounded-lg py-2 px-3.5 text-xs font-semibold border transition-all ${
+                musicTrack === key ? 'bg-gold-500/20 border-gold-400/50 text-white' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'
+              }`}
+            >
+              {key === 'off' ? <VolumeX size={14} /> : <Music size={14} />}
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {musicTrack !== 'off' && (
+          <>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] text-slate-500 w-16">Volumen</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={musicVolume}
+                onChange={(e) => setMusicVolume(Number(e.target.value))}
+                className="flex-1"
+              />
+            </div>
+            <p className="text-[11px] text-slate-600 mt-2">{tracks[musicTrack].credit}</p>
+          </>
+        )}
       </div>
 
       <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">

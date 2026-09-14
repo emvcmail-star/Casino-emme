@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import Layout from '../components/Layout.jsx';
+import GameTopBar from '../components/GameTopBar.jsx';
 import { GAME_META } from '../components/GameCard.jsx';
 
 import Slots from '../games/Slots.jsx';
@@ -48,6 +49,7 @@ export default function GamePage() {
 
   return (
     <Layout title={meta?.name || key} subtitle="Créditos virtuales, sin valor monetario">
+      <GameTopBar name={meta?.name || key} icon={meta?.icon} />
       <Game gameKey={key} />
     </Layout>
   );

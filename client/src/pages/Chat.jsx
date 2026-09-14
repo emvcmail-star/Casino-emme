@@ -17,7 +17,21 @@ export default function Chat() {
   const listRef = useRef(null);
 
   useEffect(() => {
-    api.get('/chat/history?limit=50').then((d) => setMessages(d.messages)).catch(() => setMessages([]));
+    api
+      .get('/chat/history?limit=50')
+      .then((d) =>
+        setMessages(
+          d.messages.map((m) => ({
+            id: m.id,
+            displayName: m.display_name,
+            avatar: m.avatar,
+            text: m.text,
+            incognito: !!m.incognito,
+            createdAt: m.created_at,
+          }))
+        )
+      )
+      .catch(() => setMessages([]));
 
     const socket = io({ auth: { token: getToken() } });
     socketRef.current = socket;

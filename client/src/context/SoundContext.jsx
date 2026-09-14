@@ -2,6 +2,15 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 
 const SoundContext = createContext(null);
 const STORAGE_KEY = 'casino_demo_muted';
+const MUSIC_KEY = 'casino_demo_music_track';
+const MUSIC_VOLUME_KEY = 'casino_demo_music_volume';
+
+export const MUSIC_TRACKS = {
+  off: { label: 'Sin música' },
+  lounge: { label: 'Casino Lounge', src: '/audio/lounge.mp3', credit: '"Bossa Antigua" — Kevin MacLeod (incompetech.com)' },
+  upbeat: { label: 'Arcade', src: '/audio/upbeat.mp3', credit: '"Cool Vibes" — Kevin MacLeod (incompetech.com)' },
+  elevator: { label: 'Elevador VIP', src: '/audio/elevator.mp3', credit: '"Local Forecast - Elevator" — Kevin MacLeod (incompetech.com)' },
+};
 
 const PRESETS = {
   win: [
@@ -43,6 +52,75 @@ export function SoundProvider({ children }) {
     }
   }, [muted]);
 
+  const [musicTrack, setMusicTrackState] = useState(() => {
+    try {
+      const saved = localStorage.getItem(MUSIC_KEY);
+      return saved && MUSIC_TRACKS[saved] ? saved : 'off';
+    } catch {
+      return 'off';
+    }
+  });
+  const [musicVolume, setMusicVolumeState] = useState(() => {
+    try {
+      const saved = Number(localStorage.getItem(MUSIC_VOLUME_KEY));
+      return Number.isFinite(saved) && saved >= 0 && saved <= 1 ? saved : 0.35;
+    } catch {
+      return 0.35;
+    }
+  });
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (!audioRef.current) {
+      const el = new Audio();
+      el.loop = true;
+      audioRef.current = el;
+    }
+    const el = audioRef.current;
+    const track = MUSIC_TRACKS[musicTrack];
+    if (!track?.src) {
+      el.pause();
+      el.removeAttribute('src');
+      return;
+    }
+    if (!el.src.endsWith(track.src)) {
+      el.src = track.src;
+    }
+    el.volume = musicVolume;
+    if (!muted) {
+      el.play().catch(() => {
+        // el navegador puede bloquear el autoplay hasta la primera interacción del usuario
+      });
+    } else {
+      el.pause();
+    }
+  }, [musicTrack, muted]);
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = musicVolume;
+  }, [musicVolume]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MUSIC_KEY, musicTrack);
+    } catch {
+      // ignore
+    }
+  }, [musicTrack]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MUSIC_VOLUME_KEY, String(musicVolume));
+    } catch {
+      // ignore
+    }
+  }, [musicVolume]);
+
+  const setMusicTrack = (key) => {
+    if (MUSIC_TRACKS[key]) setMusicTrackState(key);
+  };
+  const setMusicVolume = (v) => setMusicVolumeState(Math.min(1, Math.max(0, v)));
+
   const getCtx = () => {
     if (!ctxRef.current) {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -79,7 +157,9 @@ export function SoundProvider({ children }) {
   );
 
   return (
-    <SoundContext.Provider value={{ muted, setMuted, play }}>
+    <SoundContext.Provider
+      value={{ muted, setMuted, play, musicTrack, setMusicTrack, musicVolume, setMusicVolume, tracks: MUSIC_TRACKS }}
+    >
       {children}
     </SoundContext.Provider>
   );

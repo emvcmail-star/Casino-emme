@@ -28,6 +28,12 @@ export default {
           900: '#0c1a14',
           800: '#12261d',
         },
+        neon: {
+          300: '#7dffc0',
+          400: '#01FF81',
+          500: '#00e673',
+          600: '#00b85c',
+        },
       },
       fontFamily: {
         display: ['"Manrope"', 'system-ui', 'sans-serif'],
@@ -38,6 +44,7 @@ export default {
         'glow-lg': '0 0 40px rgb(var(--gold-500) / 0.40), 0 0 100px rgb(var(--gold-600) / 0.22)',
         card: '0 10px 34px rgba(0, 0, 0, 0.45)',
         'inner-line': 'inset 0 1px 0 rgba(255,255,255,0.06)',
+        'glow-neon': '0 0 20px rgba(1,255,129,0.35), 0 0 60px rgba(1,255,129,0.15)',
       },
       backgroundImage: {
         'radial-glow': 'radial-gradient(circle at 50% 0%, rgb(var(--gold-500) / 0.14), transparent 60%)',
