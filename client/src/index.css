@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --gold-300: 243 220 154;
+  --gold-400: 233 196 106;
+  --gold-500: 212 175 55;
+  --gold-600: 169 132 31;
+  --gold-glow: 243 210 122;
+}
+
 html, body, #root {
   height: 100%;
 }
@@ -9,7 +17,7 @@ html, body, #root {
 body {
   @apply bg-base-950 text-slate-100 font-display antialiased;
   background-image:
-    radial-gradient(circle at 12% 0%, rgba(212,175,55,0.10), transparent 42%),
+    radial-gradient(circle at 12% 0%, rgb(var(--gold-500) / 0.10), transparent 42%),
     radial-gradient(circle at 88% 15%, rgba(179,39,58,0.08), transparent 40%),
     linear-gradient(180deg, #08070a 0%, #0c0a0d 55%, #08070a 100%);
   background-attachment: fixed;
@@ -22,8 +30,8 @@ h1, h2, h3, .font-serif {
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.25); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.45); }
+::-webkit-scrollbar-thumb { background: rgb(var(--gold-500) / 0.25); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--gold-500) / 0.45); }
 
 @layer components {
   .glass-card {
@@ -66,16 +74,16 @@ h1, h2, h3, .font-serif {
   .card-back {
     @apply rounded-lg border border-gold-500/30 relative overflow-hidden;
     background:
-      repeating-linear-gradient(135deg, rgba(212,175,55,0.12) 0 6px, transparent 6px 12px),
+      repeating-linear-gradient(135deg, rgb(var(--gold-500) / 0.12) 0 6px, transparent 6px 12px),
       linear-gradient(160deg, #211d25 0%, #17141a 100%);
   }
   .felt-table {
     @apply rounded-2xl border border-gold-500/15 relative overflow-hidden;
     background:
-      radial-gradient(circle at 50% -10%, rgba(212,175,55,0.10), transparent 55%),
+      radial-gradient(circle at 50% -10%, rgb(var(--gold-500) / 0.10), transparent 55%),
       radial-gradient(ellipse at 50% 120%, rgba(0,0,0,0.5), transparent 60%),
       linear-gradient(160deg, #12261d 0%, #0c1a14 65%, #0a1611 100%);
-    box-shadow: inset 0 0 0 1px rgba(212,175,55,0.08), inset 0 30px 60px rgba(0,0,0,0.35);
+    box-shadow: inset 0 0 0 1px rgb(var(--gold-500) / 0.08), inset 0 30px 60px rgba(0,0,0,0.35);
   }
   .ribbon {
     @apply relative inline-flex items-center justify-center bg-base-800/90 border-y border-gold-500/25 text-gold-300 font-semibold text-xs tracking-wide px-6 py-1.5;

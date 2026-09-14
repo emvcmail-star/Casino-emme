@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Gamepad2, Trophy, TrendingDown, Coins, Calendar, Ticket } from 'lucide-react';
+import { Gamepad2, Trophy, TrendingDown, Coins, Calendar, Ticket, Palette, Check } from 'lucide-react';
 import Layout from '../components/Layout.jsx';
 import StatCard from '../components/StatCard.jsx';
 import UserAvatar from '../components/UserAvatar.jsx';
@@ -8,10 +8,12 @@ import { SkeletonRows } from '../components/Skeleton.jsx';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 
 export default function Profile() {
   const { user, updateUser } = useAuth();
   const toast = useToast();
+  const { accent, setAccent, accents } = useTheme();
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -64,6 +66,35 @@ export default function Profile() {
         <StatCard icon={Gamepad2} label="Total de partidas" value={data?.stats.totalGames ?? 0} loading={!data} />
         <StatCard icon={Trophy} label="Victorias" value={data?.stats.wins ?? 0} accent="text-emerald-400" loading={!data} />
         <StatCard icon={TrendingDown} label="Derrotas" value={data?.stats.losses ?? 0} accent="text-rose-400" loading={!data} />
+      </div>
+
+      <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+        <Palette size={18} className="text-gold-400" /> Color del neón
+      </h3>
+      <div className="glass-card p-4 mb-8">
+        <p className="text-sm text-slate-500 mb-3">Elige el color de acento de toda la plataforma. Se guarda en este dispositivo.</p>
+        <div className="flex flex-wrap gap-3">
+          {Object.entries(accents).map(([key, a]) => (
+            <button
+              key={key}
+              onClick={() => setAccent(key)}
+              title={a.label}
+              className="flex flex-col items-center gap-1.5 group"
+            >
+              <span
+                className="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110"
+                style={{
+                  backgroundColor: a.swatch,
+                  borderColor: accent === key ? '#fff' : 'transparent',
+                  boxShadow: accent === key ? `0 0 16px ${a.swatch}` : 'none',
+                }}
+              >
+                {accent === key && <Check size={16} className="text-base-950" strokeWidth={3} />}
+              </span>
+              <span className={`text-[10px] font-medium ${accent === key ? 'text-white' : 'text-slate-500'}`}>{a.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <h3 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
