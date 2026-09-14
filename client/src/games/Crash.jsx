@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Rocket, Wallet, Flame } from 'lucide-react';
+import { Wallet, Flame } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
 import ResultBanner from '../components/ResultBanner.jsx';
 import GameShell from './GameShell.jsx';
+import PlaneIcon from './PlaneIcon.jsx';
 import { useLastPlays, LastPlaysList } from './useLastPlays.jsx';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -131,7 +132,7 @@ export default function Crash() {
           <BetControls bet={bet} setBet={setBet} min={1} max={500} disabled={flying || loading} />
           {!flying ? (
             <button className="btn-primary w-full" onClick={start} disabled={loading}>
-              <Rocket size={18} /> {loading ? 'Despegando…' : 'Apostar y despegar'}
+              <PlaneIcon size={18} /> {loading ? 'Despegando…' : 'Apostar y despegar'}
             </button>
           ) : (
             <button className="btn-danger w-full animate-pulse-glow" onClick={cashout} disabled={loading}>
@@ -174,14 +175,14 @@ export default function Crash() {
             {points.length > 0 && (
               <div
                 className={`absolute -translate-x-1/2 -translate-y-1/2 transition-none ${
-                  crashed ? 'text-crimson-400 rotate-45' : 'text-gold-300 -rotate-12'
+                  crashed ? 'text-crimson-400 rotate-45' : 'text-red-500 -rotate-12'
                 }`}
                 style={{
                   left: `${(points[points.length - 1][0] / GRAPH_W) * 100}%`,
                   top: `${(points[points.length - 1][1] / GRAPH_H) * 100}%`,
                 }}
               >
-                {crashed ? <Flame size={40} strokeWidth={1.6} /> : <Rocket size={40} strokeWidth={1.6} />}
+                {crashed ? <Flame size={40} strokeWidth={1.6} /> : <PlaneIcon size={44} />}
               </div>
             )}
             <div className={`absolute top-3 left-1/2 -translate-x-1/2 text-4xl font-extrabold tabular-nums ${crashed ? 'text-rose-400' : flying ? 'text-emerald-400' : 'text-white'}`}>
