@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Disc } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Disc, Trash2 } from 'lucide-react';
 import BetControls from '../components/BetControls.jsx';
-import ResultBanner from '../components/ResultBanner.jsx';
 import GameShell from './GameShell.jsx';
 import { useLastPlays, LastPlaysList } from './useLastPlays.jsx';
 import { api } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useSound } from '../context/SoundContext.jsx';
+import { bigWinConfetti, smallWinConfetti } from '../components/confetti.js';
 
 const RED = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 // Physical order of pockets on a European wheel, clockwise from 0.
@@ -25,26 +26,46 @@ function cellColor(n) {
   return RED.has(n) ? 'bg-crimson-600 hover:bg-crimson-500 text-white' : 'bg-base-700 hover:bg-base-600 text-white';
 }
 
+function chipKey(type, value) {
+  return `${type}:${value}`;
+}
+
 export default function Roulette() {
   const { updateCredits } = useAuth();
+  const { play } = useSound();
   const [bet, setBet] = useState(10);
-  const [selection, setSelection] = useState({ type: 'red', value: null, label: 'Rojo' });
+  const [chips, setChips] = useState({});
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [landing, setLanding] = useState(null);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
   const [plays, pushPlay] = useLastPlays();
 
-  const pick = (type, value, label) => !spinning && setSelection({ type, value, label });
+  const totalWagered = useMemo(() => Object.values(chips).reduce((s, c) => s + c.amount, 0), [chips]);
+
+  const addChip = (type, value, label) => {
+    if (spinning) return;
+    play('click');
+    const key = chipKey(type, value);
+    setChips((prev) => ({
+      ...prev,
+      [key]: { type, value, label, amount: (prev[key]?.amount || 0) + bet },
+    }));
+  };
+
+  const clearChips = () => !spinning && setChips({});
 
   const spin = async () => {
+    if (totalWagered === 0) return;
     setError('');
     setSpinning(true);
     setResult(null);
     try {
-      const data = await api.post('/games/roulette/play', { bet, betType: selection.type, betValue: selection.value });
-      const landing = data.details.spin;
-      const pocketIndex = WHEEL_ORDER.indexOf(landing);
+      const bets = Object.values(chips).map((c) => ({ betType: c.type, betValue: c.value, amount: c.amount }));
+      const data = await api.post('/games/roulette/play-multi', { bets });
+      const spinNumber = data.spin;
+      const pocketIndex = WHEEL_ORDER.indexOf(spinNumber);
       const desiredMod = (((360 - pocketIndex * ANGLE - ANGLE / 2) % 360) + 360) % 360;
       setRotation((r) => {
         const currentMod = ((r % 360) + 360) % 360;
@@ -53,9 +74,18 @@ export default function Roulette() {
         return r + 360 * 5 + delta;
       });
       await new Promise((res) => setTimeout(res, 2600));
-      setResult({ ...data, bet });
+      setLanding(spinNumber);
+      setResult({ ...data, chips: Object.values(chips) });
       updateCredits(data.newBalance);
-      pushPlay({ outcome: data.outcome, multiplier: data.multiplier, label: data.details.spin });
+      const won = data.totalPayout > 0;
+      if (won) {
+        play(data.totalPayout >= data.totalBet * 3 ? 'jackpot' : 'win');
+        if (data.totalPayout >= data.totalBet * 3) bigWinConfetti();
+        else smallWinConfetti();
+      } else {
+        play('loss');
+      }
+      pushPlay({ outcome: data.totalPayout >= data.totalBet ? 'win' : 'loss', multiplier: data.totalBet > 0 ? Math.round((data.totalPayout / data.totalBet) * 100) / 100 : 0, label: spinNumber });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -63,7 +93,14 @@ export default function Roulette() {
     }
   };
 
-  const isSel = (type, value) => selection.type === type && selection.value === value;
+  const chipAt = (type, value) => chips[chipKey(type, value)]?.amount || 0;
+
+  const ChipBadge = ({ amount }) =>
+    amount > 0 ? (
+      <span className="absolute -top-1.5 -right-1.5 bg-gold-400 text-base-950 text-[9px] font-extrabold rounded-full min-w-[16px] h-4 px-1 flex items-center justify-center shadow-glow z-10">
+        {amount}
+      </span>
+    ) : null;
 
   return (
     <GameShell
@@ -71,14 +108,21 @@ export default function Roulette() {
       controls={
         <>
           <BetControls bet={bet} setBet={setBet} min={1} max={1000} disabled={spinning} />
-          <div className="glass-card !bg-white/[0.03] p-3 text-center">
-            <p className="text-[11px] text-slate-500 mb-0.5">Apuesta seleccionada</p>
-            <p className="text-sm font-bold text-gold-300">{selection.label}</p>
+          <div className="glass-card !bg-white/[0.03] p-3">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[11px] text-slate-500">Total en mesa</p>
+              <button onClick={clearChips} disabled={spinning || totalWagered === 0} className="text-slate-500 hover:text-rose-300 disabled:opacity-30">
+                <Trash2 size={13} />
+              </button>
+            </div>
+            <p className="text-lg font-bold text-gold-300">{totalWagered.toLocaleString('es-ES')} créditos</p>
           </div>
-          <button className="btn-primary w-full" onClick={spin} disabled={spinning}>
+          <button className="btn-primary w-full" onClick={spin} disabled={spinning || totalWagered === 0}>
             <Disc size={18} /> {spinning ? 'Girando…' : 'Girar ruleta'}
           </button>
-          <p className="text-xs text-slate-500">Toca un número, color, docena o columna en la mesa para elegir tu apuesta.</p>
+          <p className="text-xs text-slate-500">
+            Toca cualquier casilla para poner una ficha ahí — puedes poner fichas en varias a la vez. Toca de nuevo para sumar más.
+          </p>
         </>
       }
       table={
@@ -107,20 +151,19 @@ export default function Roulette() {
               ))}
             </div>
             <div className="absolute inset-0 m-auto w-16 h-16 rounded-full bg-base-900 border border-gold-500/30 flex items-center justify-center text-lg font-extrabold text-white">
-              {result ? result.details.spin : '—'}
+              {landing !== null ? landing : '—'}
             </div>
           </div>
 
           <div className="w-full max-w-xl overflow-x-auto">
             <div className="min-w-[480px] flex gap-1">
               <button
-                onClick={() => pick('number', 0, 'Número 0')}
+                onClick={() => addChip('number', 0, 'Número 0')}
                 disabled={spinning}
-                className={`w-9 rounded-md ${cellColor(0)} text-xs font-bold flex items-center justify-center ${
-                  isSel('number', 0) ? 'ring-2 ring-gold-300' : ''
-                }`}
+                className={`relative w-9 rounded-md ${cellColor(0)} text-xs font-bold flex items-center justify-center`}
               >
                 0
+                <ChipBadge amount={chipAt('number', 0)} />
               </button>
               <div className="flex-1 flex flex-col gap-1">
                 {GRID_ROWS.map((row) => (
@@ -128,13 +171,12 @@ export default function Roulette() {
                     {row.nums.map((n) => (
                       <button
                         key={n}
-                        onClick={() => pick('number', n, `Número ${n}`)}
+                        onClick={() => addChip('number', n, `Número ${n}`)}
                         disabled={spinning}
-                        className={`flex-1 h-8 rounded-md text-xs font-bold ${cellColor(n)} ${
-                          isSel('number', n) ? 'ring-2 ring-gold-300' : ''
-                        }`}
+                        className={`relative flex-1 h-8 rounded-md text-xs font-bold ${cellColor(n)}`}
                       >
                         {n}
+                        <ChipBadge amount={chipAt('number', n)} />
                       </button>
                     ))}
                   </div>
@@ -144,13 +186,12 @@ export default function Roulette() {
                 {GRID_ROWS.map((row) => (
                   <button
                     key={row.colValue}
-                    onClick={() => pick('column', row.colValue, `Columna ${row.colValue === 0 ? '3-36' : row.colValue === 2 ? '2-35' : '1-34'}`)}
+                    onClick={() => addChip('column', row.colValue, `Columna ${row.colValue === 0 ? '3-36' : row.colValue === 2 ? '2-35' : '1-34'}`)}
                     disabled={spinning}
-                    className={`w-11 h-8 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-slate-300 hover:bg-white/10 ${
-                      isSel('column', row.colValue) ? 'ring-2 ring-gold-300' : ''
-                    }`}
+                    className="relative w-11 h-8 rounded-md bg-white/5 border border-white/10 text-[10px] font-bold text-slate-300 hover:bg-white/10"
                   >
                     2:1
+                    <ChipBadge amount={chipAt('column', row.colValue)} />
                   </button>
                 ))}
               </div>
@@ -164,13 +205,12 @@ export default function Roulette() {
               ].map((d) => (
                 <button
                   key={d.v}
-                  onClick={() => pick('dozen', d.v, d.l)}
+                  onClick={() => addChip('dozen', d.v, d.l)}
                   disabled={spinning}
-                  className={`h-8 rounded-md bg-white/5 border border-white/10 text-[11px] font-semibold text-slate-300 hover:bg-white/10 ${
-                    isSel('dozen', d.v) ? 'ring-2 ring-gold-300' : ''
-                  }`}
+                  className="relative h-8 rounded-md bg-white/5 border border-white/10 text-[11px] font-semibold text-slate-300 hover:bg-white/10"
                 >
                   {d.l}
+                  <ChipBadge amount={chipAt('dozen', d.v)} />
                 </button>
               ))}
             </div>
@@ -186,27 +226,59 @@ export default function Roulette() {
               ].map((o) => (
                 <button
                   key={o.t}
-                  onClick={() => pick(o.t, null, o.l)}
+                  onClick={() => addChip(o.t, null, o.l)}
                   disabled={spinning}
-                  className={`h-8 rounded-md text-[11px] font-semibold text-white ${
+                  className={`relative h-8 rounded-md text-[11px] font-semibold text-white ${
                     o.swatch || 'bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10'
-                  } ${isSel(o.t, null) ? 'ring-2 ring-gold-300' : ''}`}
+                  }`}
                 >
                   {o.l}
+                  <ChipBadge amount={chipAt(o.t, null)} />
                 </button>
               ))}
             </div>
           </div>
 
-          {result && (
+          {landing !== null && (
             <p className="text-sm text-slate-400">
-              Número {result.details.spin} · {result.details.spin === 0 ? 'Verde' : RED.has(result.details.spin) ? 'Rojo' : 'Negro'}
+              Número {landing} · {landing === 0 ? 'Verde' : RED.has(landing) ? 'Rojo' : 'Negro'}
             </p>
           )}
-          {result && <ResultBanner result={result} />}
+
+          {result && (
+            <div
+              className={`animate-slide-up w-full rounded-2xl border bg-gradient-to-br p-4 ${
+                result.totalPayout >= result.totalBet
+                  ? 'from-emerald-500/20 to-emerald-400/5 border-emerald-400/30 text-emerald-300'
+                  : 'from-rose-500/20 to-rose-400/5 border-rose-400/30 text-rose-300'
+              }`}
+            >
+              <p className="font-bold text-lg leading-none mb-1">
+                {result.results.filter((r) => r.win).length} de {result.results.length} apuestas ganadoras
+              </p>
+              <p className="text-sm text-slate-300">
+                Apostado {result.totalBet.toLocaleString('es-ES')} · Pagado {result.totalPayout.toLocaleString('es-ES')} ·{' '}
+                {result.totalPayout - result.totalBet >= 0 ? '+' : ''}
+                {(result.totalPayout - result.totalBet).toLocaleString('es-ES')} neto
+              </p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {result.chips.map((c, i) => {
+                  const r = result.results[i];
+                  return (
+                    <span
+                      key={i}
+                      className={`pill ${r.win ? 'bg-emerald-400/15 text-emerald-300' : 'bg-white/5 text-slate-500'}`}
+                    >
+                      {c.label} ({c.amount}) {r.win ? `→ +${r.payout}` : '→ 0'}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       }
-      history={<LastPlaysList plays={plays} render={(p) => `${p.label} · x${Number(p.multiplier).toFixed(1)}`} />}
+      history={<LastPlaysList plays={plays} render={(p) => `${p.label} · x${Number(p.multiplier).toFixed(2)}`} />}
     />
   );
 }

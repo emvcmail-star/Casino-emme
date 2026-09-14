@@ -2,9 +2,11 @@ import { Router } from 'express';
 import { db, recordTransaction } from '../db/index.js';
 import { requireAuth } from '../middleware/auth.js';
 import { createSession, getSession, updateSession, endSession } from '../games/sessions.js';
+import { randInt } from '../games/rng.js';
 import {
   playSlots,
   playRoulette,
+  resolveRouletteBet,
   playDice,
   playCoinFlip,
   playWheel,
@@ -205,6 +207,70 @@ router.post('/plinko/play-batch', requireAuth, async (req, res) => {
     }
 
     res.json({ results, totalBet, totalPayout, newBalance });
+  } catch (err) {
+    res.status(err.status || 400).json({ error: err.message || 'Error al procesar la jugada' });
+  }
+});
+
+// Ruleta con varias apuestas en un solo giro: mismo número resuelve todas.
+router.post('/roulette/play-multi', requireAuth, async (req, res) => {
+  const config = await requireEnabledConfig('roulette', res);
+  if (!config) return;
+
+  const bets = Array.isArray(req.body?.bets) ? req.body.bets : [];
+  if (bets.length === 0) return res.status(400).json({ error: 'Agrega al menos una apuesta' });
+  if (bets.length > 20) return res.status(400).json({ error: 'Demasiadas apuestas para un solo giro' });
+
+  let totalBet = 0;
+  for (const b of bets) {
+    const amt = Number(b.amount);
+    if (!Number.isFinite(amt) || amt <= 0) return res.status(400).json({ error: 'Apuesta inválida' });
+    if (amt < config.min_bet || amt > config.max_bet) {
+      return res.status(400).json({ error: `Cada apuesta debe estar entre ${config.min_bet} y ${config.max_bet} créditos` });
+    }
+    totalBet += amt;
+  }
+  totalBet = Math.round(totalBet * 100) / 100;
+
+  try {
+    const credits = await currentCredits(req.user.id);
+    if (credits < totalBet) throw { status: 400, message: 'Créditos virtuales insuficientes' };
+
+    const spin = randInt(0, 36);
+    let isRed = null;
+    let totalPayout = 0;
+    const results = bets.map((b) => {
+      const amt = Number(b.amount);
+      const { win, payoutMultiplier, isRed: red } = resolveRouletteBet(spin, b.betType, b.betValue);
+      isRed = red;
+      const payout = win ? Math.round(amt * payoutMultiplier * 100) / 100 : 0;
+      totalPayout += payout;
+      return { betType: b.betType, betValue: b.betValue, amount: amt, win, multiplier: win ? payoutMultiplier : 0, payout };
+    });
+    totalPayout = Math.round(totalPayout * 100) / 100;
+
+    const newBalance = Math.round((credits - totalBet + totalPayout) * 100) / 100;
+    await db.prepare('UPDATE users SET credits = ? WHERE id = ?').run(newBalance, req.user.id);
+    await recordTransaction(req.user.id, 'bet', -totalBet, newBalance, `Apuesta en roulette (${bets.length} apuestas)`);
+    if (totalPayout > 0) {
+      await recordTransaction(req.user.id, 'win', totalPayout, newBalance, `Pago de roulette (${bets.length} apuestas)`);
+    }
+    await db
+      .prepare(
+        `INSERT INTO game_history (user_id, game_key, bet_amount, payout, multiplier, outcome, details)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        req.user.id,
+        'roulette',
+        totalBet,
+        totalPayout,
+        totalBet > 0 ? Math.round((totalPayout / totalBet) * 10000) / 10000 : 0,
+        totalPayout >= totalBet ? 'win' : 'loss',
+        JSON.stringify({ spin, isRed, bets: results })
+      );
+
+    res.json({ spin, isRed, results, totalBet, totalPayout, newBalance });
   } catch (err) {
     res.status(err.status || 400).json({ error: err.message || 'Error al procesar la jugada' });
   }

@@ -21,9 +21,7 @@ export function playSlots(params, bet, input) {
 // ---------- ROULETTE ----------
 const RED_NUMBERS = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 
-export function playRoulette(_params, bet, input) {
-  const { betType, betValue } = input; // betType: 'number' | 'red' | 'black' | 'odd' | 'even' | 'low' | 'high' | 'dozen' | 'column'
-  const spin = randInt(0, 36);
+export function resolveRouletteBet(spin, betType, betValue) {
   const isRed = RED_NUMBERS.has(spin);
   let win = false;
   let payoutMultiplier = 0;
@@ -69,10 +67,18 @@ export function playRoulette(_params, bet, input) {
       throw new Error('Tipo de apuesta no válido');
   }
 
+  return { win, payoutMultiplier, isRed: spin === 0 ? null : isRed };
+}
+
+export function playRoulette(_params, bet, input) {
+  const { betType, betValue } = input; // betType: 'number' | 'red' | 'black' | 'odd' | 'even' | 'low' | 'high' | 'dozen' | 'column'
+  const spin = randInt(0, 36);
+  const { win, payoutMultiplier, isRed } = resolveRouletteBet(spin, betType, betValue);
+
   return {
     multiplier: win ? payoutMultiplier : 0,
     outcome: win ? 'win' : 'loss',
-    details: { spin, isRed: spin === 0 ? null : isRed, betType, betValue },
+    details: { spin, isRed, betType, betValue },
   };
 }
 
